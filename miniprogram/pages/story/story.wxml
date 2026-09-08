@@ -1,0 +1,27 @@
+<view class="page story t-{{theme}} {{mode}}" style="padding-top:{{padTop}}rpx">
+
+  <!-- 返回。top 跟右上角胶囊对齐（utils/nav.js）。 -->
+  <view class="back" style="top:{{navTop}}rpx;height:{{navSize}}rpx"
+        bindtap="back" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
+    <view class="chev"></view>
+  </view>
+
+  <view class="eyebrow">故 事</view>
+  <view class="h1">说说这个人/事</view>
+  <view class="sub">这一段将是整首歌的内容</view>
+
+  <!-- textarea 是原生组件：不在 WebView 里画，而是盖在上面的独立图层，
+       层级最高、z-index 压不住它，页面一滚它的位置就可能同步不上，
+       把下面的东西整片挡死（下一步按钮点不动就是这么来的）。
+       所以只在真正打字的那一刻才挂它，其余时候页面上一个原生组件都没有。
+
+       不写 value 是另一件事：绑上去等于每敲一个字整段文字跨一次线程再重渲一次。
+       文字由 textarea 自己保管，逻辑层只在 this._story 留一份，失焦时才回填。 -->
+  <textarea wx:if="{{writing}}" class="panel tall" focus
+            placeholder="不用写得漂亮，真诚就好" placeholder-class="ph"
+            bindinput="onStory" bindblur="stopWriting"
+            maxlength="800" auto-height="{{false}}" />
+  <view wx:else class="panel tall {{storyText ? '' : 'is-ph'}}" bindtap="startWriting">{{storyText || '不用写得漂亮，真诚就好'}}</view>
+
+  <view class="btn" bindtap="next" hover-class="pressed" hover-start-time="0" hover-stay-time="90">下 一 步</view>
+</view>

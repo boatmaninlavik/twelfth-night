@@ -1,0 +1,56 @@
+.scale {
+  margin-top: 56rpx;
+  font-family: var(--serif-en);
+  font-style: italic;
+  font-size: 46rpx;
+  line-height: 1.5;
+  letter-spacing: 4rpx;
+  color: var(--ink);
+}
+.scale-rule { margin-top: 28rpx; }
+.gloss {
+  margin-top: 22rpx;
+  font-size: 24rpx;
+  letter-spacing: 2rpx;
+  color: var(--muted);
+}
+
+.mic-wrap {
+  margin-top: 110rpx;
+  display: flex; flex-direction: column; align-items: center; gap: 34rpx;
+}
+
+/* 录音键：一圈细边 + 中间一点金。不实心、不打阴影 —— 空心圆比色块安静得多。
+   录起来是边圈上金、中心从方点化成圆点，只有这一处动。 */
+.mic {
+  width: 184rpx; height: 184rpx; border-radius: 50%;
+  box-shadow: inset 0 0 0 1rpx var(--rule);
+  display: flex; align-items: center; justify-content: center;
+  transition: box-shadow .3s ease;
+}
+.mic.on { box-shadow: inset 0 0 0 1rpx var(--brass); }
+.dot {
+  width: 52rpx; height: 52rpx;
+  background: var(--ink);
+  transition: border-radius .3s ease, background .3s ease, transform .3s ease;
+}
+.mic.on .dot { border-radius: 50%; background: var(--brass); transform: scale(.82); }
+
+.timer {
+  font-family: var(--serif-en);
+  font-size: 34rpx;
+  color: var(--brass);
+  letter-spacing: 2rpx;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 版权页注记的位置：沉到最底下，字最小，说完就退场。 */
+.notice {
+  margin-top: 96rpx;
+  padding-top: 26rpx;
+  border-top: 1rpx solid var(--rule);
+  font-size: 22rpx;
+  line-height: 1.8;
+  letter-spacing: 1rpx;
+  color: var(--muted);
+}

@@ -1,0 +1,362 @@
+.byline {
+  margin-top: 22rpx;
+  font-family: var(--serif);
+  font-size: 26rpx;
+  letter-spacing: 5rpx;
+  color: var(--brass);
+}
+
+/* .back 是 absolute 的，全局 .page 没有定位上下文，得在这一层给出来。 */
+.song { position: relative; }
+
+/* 回「我的」。碰撞区做到 64rpx（人字本身只有 22rpx），
+   不然这是一屏里最难点中的东西。 */
+.back {
+  position: absolute;
+  left: 40rpx;
+  width: 64rpx;
+  display: flex; align-items: center; justify-content: center;
+}
+.chev {
+  width: 22rpx; height: 22rpx;
+  border-left: 1rpx solid var(--ink);
+  border-bottom: 1rpx solid var(--ink);
+  transform: rotate(45deg);
+  margin-left: 8rpx;            /* 转 45 度后视觉重心偏右，往回挪一点才居中 */
+}
+
+.stage {
+  margin: 100rpx 0 84rpx;
+  display: flex; flex-direction: column; align-items: center; gap: 46rpx;
+}
+
+/* 冠：花环 + 环心的星，跟扉页同一个标记，只是这里它兼作播放键。 */
+.crest { position: relative; width: 260rpx; height: 260rpx; }
+.star {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 104rpx; height: 104rpx;
+  transform: translate(-50%, -50%) scale(.8);
+}
+.ray {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 2rpx; height: 62rpx;
+  margin: -31rpx 0 0 -1rpx;
+  background: linear-gradient(to bottom,
+              transparent, var(--ink) 26%, var(--ink) 74%, transparent);
+}
+.ray.long { height: 104rpx; margin-top: -52rpx; }
+
+/* 指针。就是正北那根芒延长出去的那一段 —— 星本身不动，只有它走。
+   原来播放时是整颗星在匀速自转，那只表示"在响"，不表示"到哪儿了"。
+   现在一首歌正好走满一圈：歌短就转得快，歌长就转得慢，不用印数字。
+
+   .hand 是个 0×0 的点，压在圆心上，rotate 自然绕圆心；针挂在它上面朝正北长。 */
+.hand {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 0; height: 0;
+  transition: transform .3s linear;
+}
+/* 拖动时关掉插值：手指到哪儿针就得在哪儿，慢半拍就完全不跟手了。 */
+.hand.nolerp { transition: none; }
+.needle {
+  position: absolute;
+  left: -1rpx; bottom: 0;
+  width: 2rpx; height: 62rpx;      /* 星的长芒到 41.6rpx，针再探出去一截 */
+  /* 针尖淡出，根部实 —— 跟那些芒是同一种笔法 */
+  background: linear-gradient(to bottom, transparent, var(--ink) 22%, var(--ink) 100%);
+}
+
+.cue {
+  font-family: var(--serif);
+  font-size: 26rpx;
+  letter-spacing: 10rpx;
+  text-indent: 10rpx;
+  color: var(--muted);
+}
+
+/* 制作中的提示排成校样批注：上下两根界栏夹一行居中小字。 */
+.badge {
+  padding: 24rpx 0;
+  border-top: 1rpx solid var(--rule);
+  border-bottom: 1rpx solid var(--rule);
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 23rpx;
+  letter-spacing: 3rpx;
+  color: var(--muted);
+}
+
+/* 歌词是这一整册书的正文，唯一该占满版心的东西：衬线、双倍行距、不居中。 */
+/* 歌词面板：一屏只让一行是"现在"。
+   上下各留一块空白，当前行才能停在视觉中心而不是贴着边。
+   不做深色面板、不做发光 —— 这一册书是纸和墨，卡拉OK 也该是。 */
+.panel {
+  margin-top: 56rpx;
+  height: 620rpx;
+}
+.pad { height: 250rpx; }
+
+.ln {
+  padding: 22rpx 0;
+  font-family: var(--serif);
+  font-size: 32rpx;
+  line-height: 1.5;
+  letter-spacing: 1rpx;
+  color: var(--muted);
+  transition: color .25s ease, font-size .25s ease, opacity .25s ease;
+}
+/* 已经唱过的比还没唱的更淡：读者的眼睛该往下走，不该被上文拽住 */
+.past { opacity: .45; }
+.on {
+  color: var(--ink);
+  font-size: 38rpx;
+  font-weight: 600;
+}
+
+.lyrics {
+  margin-top: 56rpx;
+  font-family: var(--serif);
+  font-size: 31rpx;
+  line-height: 2.15;
+  letter-spacing: 1rpx;
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+
+/* ── 做歌中 ────────────────────────────────────────────
+   等待态跟成品态共用 .crest / .star / .ray，所以那颗星在两态之间是
+   同一个东西：它只是停下来、变得可以按。这一下不该有任何跳变。 */
+/* 小丑这一台戏的舞台。花瓣、小丑、帽子都定位在这里面。 */
+.show {
+  position: relative;
+  width: 100%;
+  height: 560rpx;
+  margin-top: 24rpx;
+}
+/* 四层共用同一个画布，绝对定位在同一个位置，天然对齐。 */
+.layer {
+  position: absolute;
+  left: 50%; top: 60rpx;
+  width: 440rpx; height: 440rpx;
+  margin-left: -220rpx;
+}
+/* 身体只做很小的上下起伏 —— 膝盖在屈伸，不是整个人在摆。 */
+.body { animation: knees 1s ease-in-out infinite; }
+/* 手臂绕肩膀转。旋转中心是肩在 620 画布里的百分比位置：
+   左肩 (272,244)、右肩 (324,244)。 */
+.armL { transform-origin: 43.9% 39.4%; animation: armL 1s ease-in-out infinite; }
+.armR { transform-origin: 52.3% 39.4%; animation: armR 1s ease-in-out infinite; }
+
+/* 帽子。宽 68rpx —— 跟他头上戴的那顶一样大（96 单位 × 440/620）。
+   top/left 落在算出来的左手位置上，所有位移都相对它。
+   周期 3 秒。手臂是它的三分之一（1 秒），因为三顶错开三分之一 ——
+   每 1 秒才有一顶经过他的手，不是每 0.7 秒，看着就不那么忙了。 */
+.hat {
+  position: absolute;
+  left: 50%;
+  width: 68rpx; height: 42rpx;
+  /* 起始位置必须**落在左手上**，因为关键帧里所有位移都是相对左手算的。
+     上一版只写了 margin-left:-34rpx（把帽子摆在画面中心），于是整组动作
+     右偏了一整个左手的距离 —— 帽子既不到手也不到头，飘在右边。
+       -34   = 帽子宽度的一半，让它以自身中心对齐
+       -78   = 左手离画面中线的距离（算出来的）
+     纵向锚的是**帽檐中心**而不是图片顶边：帽檐在帽子图里位于 78% 高处，
+     42rpx × 0.78 ≈ 33rpx，所以 top 要从左手的 209rpx 往上减这一段。 */
+  margin-left: -112rpx;
+  top: 176rpx;
+  animation-duration: 3s;            /* 放慢：2.1 秒还是偏急 */
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+/* 三顶共用一套关键帧，靠负延迟错开三分之一个周期。
+   负延迟等于"这段动画已经播了这么久"，所以一进页面三顶就已经在各自的位置上，
+   不会出现开头三顶叠在一起再散开。 */
+.hA { animation-name: hatCycle; }
+.hB { animation-name: hatCycle; animation-delay: -1s; }
+.hC { animation-name: hatCycle; animation-delay: -2s; }
+
+/* 花瓣。白色，只有叶形，没有花 —— 花在这一屏会跟小丑的红抢。
+   轨道收到 118-176rpx：之前 186-264rpx 有几片直接飘出屏幕了。
+   六片各自的半径、起始角、周期、自转都不同，整齐的一圈一眼就是程序画的。 */
+.petal {
+  position: absolute;
+  left: 50%; top: 300rpx;
+  opacity: .78;
+  animation-name: drift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@keyframes drift {
+  from { transform: rotate(0deg) translateX(var(--r)) rotate(var(--tilt)); }
+  to   { transform: rotate(360deg) translateX(var(--r)) rotate(calc(var(--tilt) + 360deg)); }
+}
+
+
+
+/* ── 等待页的文字 ─────────────────────────────────────── */
+
+/* 那句话是这一屏的主角，字号给到跟正标题一个量级。 */
+.clown-line {
+  white-space: pre-line;
+  margin-top: 8rpx;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 34rpx;
+  line-height: 1.7;
+  letter-spacing: 1rpx;
+  color: var(--ink);
+}
+.epigraph-en {
+  margin-top: 16rpx;
+  text-align: center;
+  font-family: var(--serif-en);
+  font-style: italic;              /* 原文用斜体，引文的老规矩，不用再加引号 */
+  font-size: 23rpx;
+  color: var(--muted);
+}
+
+/* 阶段词。每五秒被一个手艺词闪一下再换回来（见 song.js 的 startFlavor）——
+   一个纹丝不动的"正在谱曲"看久了像卡死了。 */
+.step {
+  margin-top: 72rpx;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 26rpx;
+  letter-spacing: 4rpx;
+  color: var(--brass);
+}
+.tip {
+  white-space: pre-line;
+  margin-top: 40rpx;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 24rpx;
+  line-height: 2;
+  letter-spacing: 1rpx;
+  color: var(--muted);
+}
+
+/* 花环在作品页上下要留白 */
+.orn { margin: 64rpx 0 40rpx; }
+
+/* 播放出错时把原文摆出来。人声换好了却听不到是最让人抓狂的失败，
+   一句"播放失败"帮不上任何忙。 */
+.err {
+  margin-top: 16rpx;
+  text-align: center;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: #9C5A61;
+}
+
+/* ── 抛帽子 ──────────────────────────────────────────────
+   两顶在空中来回，加上他头上戴的那顶，一共三顶 —— 跟剧照一致。
+
+   起点和终点是**算出来的手的位置**（见 song.wxss 里 .hat 的 top / margin-left）：
+   小丑 SVG 里两只手的圆心，经过 translate(120 0) rotate(-3 190 380) 之后，
+   落在离中线 -84rpx 和 +70rpx、距舞台顶 213rpx 和 222rpx 的地方。
+   第一版没算这个，帽子在半空凭空来回，跟手没有关系，一眼假。
+
+   抛高只有 96rpx，一个来回 2.8 秒 —— 幅度和速度都压住。
+   大开大合的杂耍跟这一屏的调子不合：这是个慢的、体面的、可爱的画面。
+   三顶帽子轮流走：左手 → 抛上头顶 → 在头上停一会儿 → 摘到右手 → 大抛回左手。
+
+   **三顶共用这一套关键帧，靠负的 animation-delay 错开**，不是各写一套。
+   上一版是把相位烘进关键帧里（时间轴整体平移后对 100 取模），结果每顶帽子的
+   0% 和 100% 落在动作的不同位置上，循环那一瞬三顶一起跳 —— 用户看到的"闪一下"。
+   让 CSS 自己处理循环就没有这个问题：它知道 100% 之后接的是 0%。
+
+   转角走两个整圈，但**落点不是整 360**：左手 -11°、右手 +8°、头顶 -6°。
+   全停在 0 度上时两顶帽子会水平地摆在两只手里，像一台天平 —— 太齐整，不像人手。
+   左右角度还特意不对称，对称本身就是"天平感"的来源。
+   头顶那个 -6° 跟身体图里画的那顶戴的角度一致，换上去看不出接缝。
+
+   循环点仍然严丝合缝：0% 是 -11°，100% 是 709°（= -11 + 720），模 360 相同，
+   位置也完全一样，所以看不出跳。
+
+   落点是算出来的：左手 -78rpx、头顶 0rpx、右手 +75rpx。
+   自然感在关键帧的疏密：时间匀速，位置按 y = -4h·u(1-u) 排 ——
+   顶点附近挪得少（看着慢），快到手时挪得多（看着快）。缓动函数做不到，
+   它是对称的，而重力不是。 */
+@keyframes hatCycle {
+  0% { transform: translate(0.0rpx, 0.0rpx) rotate(-11deg); }
+  2% { transform: translate(0.0rpx, 0.0rpx) rotate(-11deg); }
+  4% { transform: translate(0.0rpx, 0.0rpx) rotate(-11deg); }
+  6% { transform: translate(0.0rpx, 0.0rpx) rotate(-11deg); }
+  8% { transform: translate(6.5rpx, -22.7rpx) rotate(19deg); }
+  10% { transform: translate(13.0rpx, -42.0rpx) rotate(50deg); }
+  12% { transform: translate(19.5rpx, -57.9rpx) rotate(80deg); }
+  14% { transform: translate(26.0rpx, -70.3rpx) rotate(111deg); }
+  16% { transform: translate(32.5rpx, -79.2rpx) rotate(141deg); }
+  18% { transform: translate(39.0rpx, -84.7rpx) rotate(172deg); }
+  20% { transform: translate(45.5rpx, -86.8rpx) rotate(202deg); }
+  22% { transform: translate(52.0rpx, -85.4rpx) rotate(232deg); }
+  24% { transform: translate(58.5rpx, -80.6rpx) rotate(263deg); }
+  26% { transform: translate(65.1rpx, -72.3rpx) rotate(293deg); }
+  28% { transform: translate(71.6rpx, -60.6rpx) rotate(324deg); }
+  30% { transform: translate(78.1rpx, -45.4rpx) rotate(354deg); }
+  32% { transform: translate(78.1rpx, -45.4rpx) rotate(354deg); }
+  34% { transform: translate(78.1rpx, -45.4rpx) rotate(354deg); }
+  36% { transform: translate(78.1rpx, -45.4rpx) rotate(354deg); }
+  38% { transform: translate(78.1rpx, -45.4rpx) rotate(354deg); }
+  40% { transform: translate(78.1rpx, -45.4rpx) rotate(354deg); }
+  42% { transform: translate(78.1rpx, -45.4rpx) rotate(354deg); }
+  44% { transform: translate(78.1rpx, -45.4rpx) rotate(354deg); }
+  46% { transform: translate(78.1rpx, -45.4rpx) rotate(354deg); }
+  48% { transform: translate(78.1rpx, -45.4rpx) rotate(354deg); }
+  50% { transform: translate(78.1rpx, -45.4rpx) rotate(354deg); }
+  52% { transform: translate(78.1rpx, -45.4rpx) rotate(354deg); }
+  54% { transform: translate(78.1rpx, -45.4rpx) rotate(354deg); }
+  56% { transform: translate(78.1rpx, -45.4rpx) rotate(354deg); }
+  58% { transform: translate(78.1rpx, -45.4rpx) rotate(354deg); }
+  60% { transform: translate(96.9rpx, -49.3rpx) rotate(358deg); }
+  62% { transform: translate(115.7rpx, -40.2rpx) rotate(361deg); }
+  64% { transform: translate(134.5rpx, -18.1rpx) rotate(364deg); }
+  66% { transform: translate(153.3rpx, 17.0rpx) rotate(368deg); }
+  68% { transform: translate(142.3rpx, -11.8rpx) rotate(392deg); }
+  70% { transform: translate(131.4rpx, -36.3rpx) rotate(417deg); }
+  72% { transform: translate(120.4rpx, -56.7rpx) rotate(441deg); }
+  74% { transform: translate(109.5rpx, -72.7rpx) rotate(465deg); }
+  76% { transform: translate(98.5rpx, -84.6rpx) rotate(490deg); }
+  78% { transform: translate(87.6rpx, -92.1rpx) rotate(514deg); }
+  80% { transform: translate(76.6rpx, -95.5rpx) rotate(538deg); }
+  82% { transform: translate(65.7rpx, -94.6rpx) rotate(563deg); }
+  84% { transform: translate(54.7rpx, -89.4rpx) rotate(587deg); }
+  86% { transform: translate(43.8rpx, -80.0rpx) rotate(612deg); }
+  88% { transform: translate(32.8rpx, -66.4rpx) rotate(636deg); }
+  90% { transform: translate(21.9rpx, -48.5rpx) rotate(660deg); }
+  92% { transform: translate(10.9rpx, -26.4rpx) rotate(685deg); }
+  94% { transform: translate(0.0rpx, 0.0rpx) rotate(709deg); }
+  96% { transform: translate(0.0rpx, 0.0rpx) rotate(709deg); }
+  98% { transform: translate(0.0rpx, 0.0rpx) rotate(709deg); }
+  100% { transform: translate(0.0rpx, 0.0rpx) rotate(709deg); }
+}
+
+
+/* 手臂。周期是帽子的三分之一（1s）：三顶错开三分之一，所以每 1 秒有一顶
+   经过他的手。幅度 16 度 —— 小幅度在这个尺寸下看不出在动，只显得抽搐。
+   动作是"接—沉—送"：接住时往下沉（卸力），送出去时往上扬。 */
+@keyframes armL {
+  0%   { transform: rotate(-3deg); }
+  20%  { transform: rotate(7deg); }
+  50%  { transform: rotate(-16deg); }
+  74%  { transform: rotate(-8deg); }
+  100% { transform: rotate(-3deg); }
+}
+@keyframes armR {
+  0%   { transform: rotate(3deg); }
+  24%  { transform: rotate(16deg); }
+  54%  { transform: rotate(-6deg); }
+  78%  { transform: rotate(2deg); }
+  100% { transform: rotate(3deg); }
+}
+
+/* 身体只做很小的上下起伏 —— 膝盖在屈伸，不是整个人在摆。 */
+@keyframes knees {
+  0%, 100% { transform: translateY(0); }
+  30%      { transform: translateY(-5rpx); }
+  62%      { transform: translateY(-2rpx); }
+}

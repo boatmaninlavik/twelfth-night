@@ -1,0 +1,59 @@
+<view class="page order t-{{theme}} {{mode}}" style="padding-top:{{padTop}}rpx">
+
+  <!-- 返回。top 跟右上角胶囊对齐（utils/nav.js）。 -->
+  <view class="back" style="top:{{navTop}}rpx;height:{{navSize}}rpx"
+        bindtap="back" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
+    <view class="chev"></view>
+  </view>
+
+  <view class="eyebrow">定 歌</view>
+  <view class="h1">这首歌{{'\n'}}唱给谁？</view>
+
+  <!-- 不绑 value：绑上去等于每敲一个字整段文字跨一次线程再重渲一次。
+       文字由 input 自己保管，逻辑层只在 this._toName 留一份。 -->
+  <input class="panel" placeholder="ta 的名字" placeholder-class="ph"
+         bindinput="onToName" maxlength="20" />
+
+  <view class="lbl">什么场合<text class="opt">（可选）</text></view>
+  <view class="pills">
+    <view class="pill {{occasion === item ? 'on' : ''}}" wx:for="{{occasions}}" wx:key="*this"
+          data-v="{{item}}" bindtap="pick" hover-class="pressed" hover-start-time="0" hover-stay-time="90">{{item}}</view>
+    <!-- 「不指定」排在最后，而且是默认选中的那一个。 -->
+    <view class="pill {{occasion === '' ? 'on' : ''}}" data-v=""
+          bindtap="pick" hover-class="pressed" hover-start-time="0" hover-stay-time="90">不指定</view>
+  </view>
+
+  <view class="lbl">参考一首歌<text class="opt">（可选）</text></view>
+
+  <!-- 「换」是唯一的清除入口，而且用 catchtap 不让事件冒泡：
+       整块都能点的话，选中的一瞬间这块正好长在刚才那一行的位置上，
+       同一次点击很容易被新挂上来的节点再吃一次 —— 表现就是"选了等于没选"。 -->
+  <view class="panel-list" wx:if="{{refSong}}">
+    <view class="row">
+      <image class="cover-sm" src="{{refSong.albumArt}}" mode="aspectFill" />
+      <view class="row-txt">
+        <view class="row-name">{{refSong.name}}</view>
+        <view class="muted">{{refSong.artist}}</view>
+      </view>
+      <view class="swap" catchtap="clearRef" hover-class="pressed" hover-start-time="0" hover-stay-time="90">换</view>
+    </view>
+  </view>
+
+  <block wx:else>
+    <input class="panel" placeholder="搜歌名或歌手" placeholder-class="ph"
+           bindinput="onQuery" confirm-type="search" />
+    <view class="panel-list" wx:if="{{results.length}}">
+      <view class="row" wx:for="{{results}}" wx:key="id" data-song="{{item}}"
+            bindtap="pickRef" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
+        <image class="cover-sm" src="{{item.albumArt}}" mode="aspectFill" />
+        <view class="row-txt">
+          <view class="row-name">{{item.name}}</view>
+          <view class="muted">{{item.artist}}</view>
+        </view>
+      </view>
+    </view>
+    <view class="muted searching" wx:if="{{searching}}">搜索中…</view>
+  </block>
+
+  <view class="btn" bindtap="next" hover-class="pressed" hover-start-time="0" hover-stay-time="90">下 一 步</view>
+</view>

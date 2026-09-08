@@ -1,0 +1,112 @@
+/* 「我的」。歌单的结构，印刷品的长相。 */
+
+/* .back 是 absolute 的，全局 .page 没有定位上下文，得在这一层给出来。 */
+/* padding-top 由 utils/nav.js 按胶囊位置在行内给出，这里只留定位上下文。 */
+.mine { position: relative; }
+
+/* 返回。人字形的两条 1rpx —— 跟全册的界栏是同一根线。
+   碰撞区做到 64rpx（人字本身只有 22rpx），不然这是一屏里最难点中的东西。 */
+.back {
+  position: absolute;
+  left: 40rpx;
+  width: 64rpx;
+  display: flex; align-items: center; justify-content: center;
+}
+.chev {
+  width: 22rpx; height: 22rpx;
+  border-left: 1rpx solid var(--ink);
+  border-bottom: 1rpx solid var(--ink);
+  transform: rotate(45deg);
+  margin-left: 8rpx;            /* 转 45 度之后视觉重心偏右，往回挪一点才居中 */
+}
+
+/* 歌单头：封面 + 单名 + 条数。 */
+.head { display: flex; align-items: center; }
+.cover {
+  width: 180rpx; height: 180rpx;
+  flex: none;
+  margin-right: 30rpx;
+}
+.head-txt { flex: 1; min-width: 0; }
+
+/* 不带界栏的幕次标：这一条在头块内部，下面已经有一根横线了，
+   再带一根自己的就成了双线。 */
+.eyebrow-plain {
+  font-family: var(--serif);
+  font-size: 22rpx;
+  color: var(--brass);
+  letter-spacing: 8rpx;
+  text-indent: 8rpx;
+}
+.head-name {
+  margin-top: 16rpx;
+  font-family: var(--serif);
+  font-size: 56rpx;
+  font-weight: 600;
+  letter-spacing: 6rpx;
+  text-indent: 6rpx;
+  color: var(--ink);
+}
+.head-meta {
+  margin-top: 14rpx;
+  font-size: 24rpx;
+  color: var(--muted);
+  letter-spacing: 1rpx;
+}
+
+.rule { margin: 44rpx 0 0; }
+
+/* 曲目行 */
+.track {
+  display: flex;
+  align-items: center;
+  padding: 34rpx 0;
+  border-bottom: 1rpx solid var(--rule);
+}
+.no {
+  width: 62rpx;
+  flex: none;
+  font-family: var(--serif);
+  font-size: 26rpx;
+  color: var(--muted);
+  letter-spacing: 1rpx;
+}
+.track-txt { flex: 1; min-width: 0; }
+.track-name {
+  font-family: var(--serif);
+  font-size: 32rpx;
+  line-height: 1.4;
+  color: var(--ink);
+  /* 歌名可能很长，截断而不是换行 —— 一行一首，曲目单才立得住 */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* 还没做完的那几行压一档：曲目单上它们还不是作品。 */
+.track-name.dim { color: var(--muted); }
+.track-meta {
+  margin-top: 10rpx;
+  font-size: 23rpx;
+  color: var(--muted);
+  letter-spacing: 1rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.mark { flex: none; margin-left: 24rpx; display: flex; align-items: center; }
+/* 播放三角。它不是按钮 —— 按下整行都去作品页，那边才有播放器。
+   放在这儿只为一眼分出哪几首能听。 */
+.tri {
+  width: 0; height: 0;
+  border-left: 18rpx solid var(--ink);
+  border-top: 11rpx solid transparent;
+  border-bottom: 11rpx solid transparent;
+}
+.tag { font-size: 22rpx; letter-spacing: 2rpx; }
+.tag.making { color: var(--brass); }
+.tag.muted { color: var(--muted); }
+
+.blank { padding: 90rpx 0; text-align: center; }
+
+.btn { margin-top: 64rpx; }

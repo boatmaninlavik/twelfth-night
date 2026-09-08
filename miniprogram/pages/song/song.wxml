@@ -1,0 +1,94 @@
+<view style="padding-top:{{padTop}}rpx" class="page song t-{{theme}} {{mode}}">
+
+  <!-- 回「我的」。navigationStyle 是 custom，系统不画返回箭头。
+       两条 1rpx 拼一个人字，跟全册的界栏是同一根线。 -->
+  <view class="back" style="top:{{navTop}}rpx;height:{{navSize}}rpx" bindtap="back" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
+    <view class="chev"></view>
+  </view>
+
+  <!-- ══ 做歌中 ══════════════════════════════════════════
+       不显示歌名、不显示歌词 —— 那是成品的一部分，提前露出来就把惊喜拆了。
+       转着的这颗星，等下会停下来变成播放键；同一个元素，不换页面。 -->
+  <block wx:if="{{!ready && !failed}}">
+    <view class="eyebrow">制作中</view>
+
+    <!-- 费斯特：《第十二夜》里唯一清醒的人，也是剧中真正唱歌的那个。
+         别人喝醉、错认、装疯，只有他在旁边弹琴唱真话。
+         让他来陪用户等这首歌，比一个转圈的加载图标贴切得多。 -->
+    <view class="show">
+      <!-- 花瓣先画，飘在小丑身后 -->
+      <image wx:for="{{petals}}" wx:key="k" class="petal"
+             src="{{item.src}}" style="{{item.style}}" />
+      <!-- 拆成四层，四层共用同一个画布所以严丝合缝地重叠。
+           手臂各自动 —— 整个人一起摆像根柱子，而这个戏法的关键正是手在接和抛。 -->
+      <image class="layer body" src="{{body}}" />
+      <image class="layer armL" src="{{armL}}" />
+      <image class="layer armR" src="{{armR}}" />
+      <!-- 三顶帽子轮流走：左手 → 头顶（停一会儿）→ 右手 → 大抛回左手。
+           错开三分之一周期，所以他头上基本一直戴着一顶。 -->
+      <image class="hat hA" src="{{hat}}" />
+      <image class="hat hB" src="{{hat}}" />
+      <image class="hat hC" src="{{hat}}" />
+    </view>
+
+    <view class="clown-line">{{clown}}</view>
+
+    <!-- 费斯特在第二幕第三场唱的那首。剧里被真正唱出来的歌 ——
+         扉页那句是被说出来的。 -->
+    <view class="epigraph-en">Journeys end in lovers meeting</view>
+
+    <view class="step">{{step}}…</view>
+    <view class="tip">大概需要一天左右。{{'\n'}}好了会通知你，{{'\n'}}这期间可以关掉小程序。</view>
+  </block>
+
+  <!-- ══ 出问题了 ══════════════════════════════════════ -->
+  <block wx:elif="{{failed}}">
+    <view class="eyebrow">出了点问题</view>
+    <view class="h1">这一首没能做成</view>
+    <view class="sub">{{errMsg}}</view>
+    <view class="btn btn-ghost" bindtap="again" hover-class="pressed" hover-start-time="0">重 新 来 过</view>
+  </block>
+
+  <!-- ══ 做好了 ══════════════════════════════════════════ -->
+  <block wx:else>
+    <view class="eyebrow">你的歌</view>
+    <view class="h1">{{title}}</view>
+    <view class="byline" wx:if="{{byline}}">{{byline}}</view>
+
+    <!-- 就是上面那颗星，停下来了，现在可以按。 -->
+    <!-- 这颗星兼作钟：正北那根芒延长出去就是指针，一首歌走满一圈。
+         点它 = 播放/暂停；按住指针转 = 拖到歌里的任意位置。 -->
+    <view class="stage">
+      <view class="crest" catchtap="toggle"
+            catchtouchstart="clockStart" catchtouchmove="clockMove" catchtouchend="clockEnd">
+        <wreath />
+        <view class="star">
+          <view class="ray {{item.long ? 'long' : ''}}" wx:for="{{rays}}" wx:key="deg"
+                style="transform: rotate({{item.deg}}deg)"></view>
+        </view>
+        <!-- 指针。0 度指正北，顺时针走。onTimeUpdate 一秒才四次，
+             靠 CSS transition 把这四帧补成连续的走针；拖动时把 transition 关掉，
+             不然手指到哪儿针慢半拍才到，完全不跟手。 -->
+        <view class="hand {{scrubbing ? 'nolerp' : ''}}"
+              style="transform: rotate({{angle}}deg)"><view class="needle"></view></view>
+      </view>
+      <view class="cue">{{loading ? '载 入 中' : (playing ? '暂 停' : '播 放')}}</view>
+      <view class="err" wx:if="{{audioErr}}">{{audioErr}}</view>
+    </view>
+
+    <!-- 歌词面板。对齐置信度够就逐行同步，不够就退回整段纯歌词 ——
+         显示错的同步比没有同步更糟：人会跟着字读，字错了整首都不对。 -->
+    <scroll-view wx:if="{{synced}}" class="panel" scroll-y scroll-with-animation
+                 scroll-into-view="{{anchor}}" enhanced="{{true}}" show-scrollbar="{{false}}">
+      <view class="pad"></view>
+      <view wx:for="{{lines}}" wx:key="index" id="L{{index}}"
+            class="ln {{index === active ? 'on' : (index < active ? 'past' : '')}}"
+            data-t="{{item.start}}" bindtap="seek">{{item.text}}</view>
+      <view class="pad"></view>
+    </scroll-view>
+    <view wx:else class="lyrics">{{lyrics}}</view>
+
+    <view class="btn btn-ghost" bindtap="again" hover-class="pressed" hover-start-time="0">我 也 要 做 一 首</view>
+  </block>
+
+</view>

@@ -1,0 +1,8 @@
+<view class="wreath" style="transform: scale({{scale}})">
+  <view class="leaf" wx:for="{{leaves}}" wx:key="k" style="{{item.style}}"></view>
+
+  <view class="bloom" wx:for="{{blooms}}" wx:key="k" wx:for-item="b" style="{{b.style}}">
+    <view class="petal" wx:for="{{b.petals}}" wx:key="*this" style="{{item}}"></view>
+    <view class="core" style="{{b.core}}"></view>
+  </view>
+</view>

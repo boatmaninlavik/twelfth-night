@@ -1,0 +1,159 @@
+/* 扉页不吃全局 .page 的上下留白 —— 这一页是封面，自己排。 */
+.title-page {
+  position: relative;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 130rpx 76rpx 110rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 整块内容当一栏居中：按钮落在视觉中线偏下，拇指够得到，
+   也不会像钉在屏幕底那样跟上面断开。 */
+.plate {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* 明暗开关。胶囊按钮占了右上角，所以放左上。 */
+.mode {
+  position: absolute;
+  left: 60rpx; top: 108rpx;
+  width: 40rpx; height: 40rpx;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1rpx var(--ink-soft);
+  overflow: hidden;
+}
+.half { width: 50%; height: 100%; background: var(--ink-soft); }
+
+/* 花环 + 环心的星 */
+.crest { position: relative; width: 260rpx; height: 260rpx; }
+.star {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 104rpx; height: 104rpx;
+  /* 缩到八成：环内径和芒尖之间要留得出空，挤上了就成了靶子 */
+  transform: translate(-50%, -50%) scale(.8);
+}
+.ray {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 2rpx; height: 62rpx;
+  margin: -31rpx 0 0 -1rpx;
+  /* 两头淡出，芒尖才是尖的，不是齐口切断的火柴棍 */
+  background: linear-gradient(to bottom,
+              transparent, var(--ink) 26%, var(--ink) 74%, transparent);
+}
+.ray.long { height: 104rpx; margin-top: -52rpx; }
+
+/* 题名。这一页最大的字给产品，不给引文。 */
+.wordmark {
+  margin-top: 64rpx;
+  font-family: var(--serif);
+  font-size: 84rpx;
+  font-weight: 600;
+  letter-spacing: 18rpx;
+  text-indent: 18rpx;          /* 补掉末字后面多出来的那一格 */
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+/* 题记。加引号、降字号、破折号署名 —— 一看就知道是引别人的话，不是本店标语。 */
+.epigraph {
+  margin-top: 46rpx;
+  font-family: var(--serif);
+  font-size: 29rpx;
+  line-height: 1.75;
+  letter-spacing: 1rpx;
+  color: var(--ink-soft);
+}
+.epigraph-en {
+  margin-top: 12rpx;
+  font-family: var(--serif-en);
+  font-style: italic;          /* 原文用斜体，是引文的老规矩，不用再加一道引号 */
+  font-size: 23rpx;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.attrib {
+  margin-top: 20rpx;
+  font-family: var(--serif);
+  font-size: 23rpx;
+  letter-spacing: 4rpx;
+  color: var(--muted);
+}
+
+.lede {
+  white-space: pre-line;
+  margin-top: 92rpx;
+  font-size: 26rpx;
+  line-height: 2;
+  letter-spacing: 1rpx;
+  color: var(--muted);
+}
+
+/* 扉页的按钮不实心：封面上压一个黑块太重，描一道线就够了。 */
+.enter {
+  align-self: stretch;
+  margin-top: 44rpx;
+  height: 100rpx;
+  line-height: 100rpx;
+  font-family: var(--serif);
+  font-size: 29rpx;
+  letter-spacing: 16rpx;
+  text-indent: 16rpx;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1rpx var(--ink);
+}
+
+/* 两扇门。做过歌的人才看得到。
+   一版做成一块牌子从中间裁开的两个方格 —— 并排两个方格是跳房子，不是设计。
+   二版改成上下两行的戏单目次 —— 更不好：左右一眼能同时看见两个选择，
+   上下要读两行，而这里两个选择是平权的。
+   所以是左右，但**外框全去掉**，中间只留一根界栏。 */
+.doors {
+  align-self: stretch;
+  margin-top: 40rpx;
+  display: flex;
+}
+.door {
+  flex: 1;
+  /* min-width:0 —— 不写的话 flex 项以内容宽为底，两半会被图标撑得不等宽 */
+  min-width: 0;
+  padding: 30rpx 0 26rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* 中缝。用 box-shadow 不用 border：border 会把这一半的内容盒挤窄 1rpx，
+   两边就不再等宽了 —— 在这个尺寸上看得出来。 */
+.door.hair { box-shadow: inset 1rpx 0 0 0 var(--rule); }
+
+/* 两个饰的形状差得远：冠是一顶又宽又矮的东西，小丑脸是一个圆。
+   给它们**同样高的框**、各自在框里居中，两行字才落在同一条基线上。 */
+.mark {
+  height: 104rpx;
+  display: flex; align-items: center; justify-content: center;
+}
+/* 冠的画布是 148×114（两侧各留了 10，最外那两朵花的花瓣本来在画布外）。
+   给它 132×102 正好吃满这个比例，不会被 aspectFit 再缩一道。 */
+.mark .crown { width: 132rpx; height: 102rpx; }
+.mark .clown { width: 100rpx; height: 100rpx; }
+
+/* 这两个字是这一页唯一要人去按的东西，得有分量。
+   之前 28rpx 常规字重，压在满页留白里像两条注解 —— 人不会想去点一条注解。
+   放到 42rpx、上 600 字重（字体自带，不让系统合成），字距照旧拉开。 */
+.door-label {
+  margin-top: 24rpx;
+  font-family: var(--serif);
+  font-size: 42rpx;
+  font-weight: 600;
+  letter-spacing: 14rpx;
+  text-indent: 14rpx;          /* 补掉末字后面多出来的那一格 */
+  line-height: 1.2;
+  color: var(--ink);
+}

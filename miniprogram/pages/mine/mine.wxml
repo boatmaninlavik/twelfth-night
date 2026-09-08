@@ -1,0 +1,46 @@
+<view style="padding-top:{{padTop}}rpx" class="page mine {{mode}}">
+
+  <!-- navigationStyle 是 custom，系统不画返回箭头，安卓上没有返回键就出不去了。
+       两条 1rpx 拼一个人字，跟全册的界栏是同一根线，不引图标字体。 -->
+  <view class="back" style="top:{{navTop}}rpx;height:{{navSize}}rpx" bindtap="back" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
+    <view class="chev"></view>
+  </view>
+
+  <!-- 歌单头：封面 + 名字 + 条数。封面是小丑 —— 等歌时陪着用户的是他，
+       回来找自己的歌，迎面还是他。他会不定时地笑一下、眨一下眼（见 mine.js）。 -->
+  <view class="head">
+    <image class="cover" src="{{face}}" mode="aspectFit" />
+    <view class="head-txt">
+      <view class="eyebrow-plain">歌单</view>
+      <view class="head-name">我 的</view>
+      <view class="head-meta">{{songs.length}} 首{{doneCount ? ' · ' + doneCount + ' 首已完成' : ''}}</view>
+    </view>
+  </view>
+
+  <view class="rule"></view>
+
+  <!-- 曲目。序号 + 歌名 + 一行小字，右边是状态。
+       密排、界栏分行，不做卡片 —— 卡片是 App 的语言，这是一份曲目单。 -->
+  <view class="track" wx:for="{{songs}}" wx:key="id"
+        data-id="{{item.id}}" data-occasion="{{item.occasion}}"
+        bindtap="open" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
+    <view class="no">{{item.no}}</view>
+    <view class="track-txt">
+      <view class="track-name {{item.state === 'done' ? '' : 'dim'}}">{{item.name}}</view>
+      <view class="track-meta">{{item.meta}}</view>
+    </view>
+    <view class="mark">
+      <view wx:if="{{item.state === 'done'}}" class="tri"></view>
+      <view wx:elif="{{item.state === 'failed'}}" class="tag muted">未完成</view>
+      <view wx:else class="tag making">制作中</view>
+    </view>
+  </view>
+
+  <!-- 正常进不来：扉页上只有做过歌的人才看得到「我的」。
+       清过缓存、换过设备的人会掉到这里，所以还是要有一条出路。 -->
+  <view wx:if="{{!songs.length}}" class="blank">
+    <view class="muted">这台设备上还没有歌。</view>
+  </view>
+
+  <view class="btn btn-ghost" bindtap="make" hover-class="pressed" hover-start-time="0" hover-stay-time="90">再 做 一 首</view>
+</view>

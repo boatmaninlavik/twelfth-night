@@ -1,0 +1,293 @@
+/* 十二夜 — 全局样式
+ *
+ * 立意：这不是一个 App，是一册印出来的戏。
+ * 所以借的是印刷品的语言 —— 衬线字、界栏、直角、宽字距的小标、大留白，
+ * 而不是 App 的语言（圆角卡片、饱和色按钮、投影、渐变）。
+ *
+ * 默认是纸。夜是整套配色翻过去的第二张皮，由用户自己在扉页点开。
+ * 扉页居中排题记，内页一律左对齐，靠一根界栏起头。
+ *
+ * 颜色全场只有一种：铜版画的那点旧金。它跟着场合变冷暖，
+ * 但永远是陈的、不亮的 —— 亮色一进来，整册书就变成传单了。
+ *
+ * 单位一律 rpx，750rpx = 屏宽。1rpx 在 2x 屏上正好压出一根物理像素的界栏，
+ * 这是整套设计里最要紧的一根线，别为了"保险"加粗成 2rpx。
+ */
+page {
+  /* 纸 */
+  --paper:      #F7F4ED;
+  --paper-sunk: #EFEADC;
+  --rule:       #DDD6C4;
+
+  /* 墨 */
+  --ink:        #1A1822;
+  --ink-soft:   #4B4655;
+  --muted:      #918A78;
+
+  /* 夜（只有扉页用） */
+  --night:      #12111A;
+  --night-ink:  #EDE7D9;
+  --night-mute: #797264;
+  --night-rule: #2C2936;
+
+
+  /* 植物。全册唯一放开饱和度的地方 —— 其余全是墨与纸。
+     没有红：大红一进来整页就成了年货海报。
+     走的是马蒂斯剪纸那条线：铬绿、孔雀、钴蓝作叶，藏红花与洋红作花，
+     平涂、无描边、无渐变，形状简单到不能再简，颜色一步不让。 */
+  --leaf-a:  #17795E;
+  --leaf-b:  #0E8B8B;
+  --leaf-c:  #2749C4;
+  --bloom-a: #E9A13B;
+  --bloom-b: #C74B93;
+
+  /* 交互状态的色，跟着场合走 */
+  --brass:      #A8874E;
+  --brass-soft: #F0E9D6;
+  --sel:        #9C5A61;   /* 干玫瑰。可选项被选中时的颜色，不随场合变 */
+
+  /* "TN Serif" 是我们自己带的思源宋体子集（app.js 里 loadFontFace 加载）。
+     排在最前面，加载完成前和加载失败时退回系统宋体 —— 那正是这个字体栈
+     原来的样子，所以失败也不会难看。
+     子集只覆盖界面上写死的字，歌词和用户输入会落到后面的系统字体上。 */
+  --serif:    "TN Serif", "Songti SC", "STSong", "Source Han Serif SC", serif;
+  --serif-en: "Didot", "Bodoni 72", "Hoefler Text", Baskerville, Georgia, serif;
+  --sans:     -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
+
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+
+/* 夜。整套设计是变量驱动的，所以换肤只是把这十个变量翻过去 ——
+   下面所有的排版规则一条都不用改。默认是纸，夜是用户自己在扉页点开的。
+   存在 storage 里（utils/mode.js），胶囊键和回弹底色归不了 WXSS 管，
+   得在运行时用 wx.setNavigationBarColor / setBackgroundColor 另设。 */
+.night {
+  --paper:      #131219;
+  --paper-sunk: #1C1B24;
+  --rule:       #2E2B37;
+  --ink:        #EDE7D9;
+  --ink-soft:   #B5AE9E;
+  --muted:      #7A7364;
+  --brass:      #C2A264;
+  --brass-soft: #241F16;
+  --sel:        #B96B73;
+  /* 同五色的夜间版：色相不动，明度和饱和度一起抬 */
+  --leaf-a:  #2FA981;
+  --leaf-b:  #22AFAF;
+  --leaf-c:  #5474EC;
+  --bloom-a: #F2B44E;
+  --bloom-b: #DC6BA8;
+}
+
+/* 场合主题：只换那点金的冷暖，不换明度。
+   全是做旧的调子 —— 干玫瑰、陈金、赭石、青灰、暗紫，
+   没有一个是从色轮上直接取的。
+   类名必须是 ASCII（中文选择器会让 WXSS 编译失败、全站白屏），
+   中文场合名到 slug 的映射在 utils/theme.js。 */
+.t-wedding  { --brass: #9C5A61; --brass-soft: #F3E7E6; }   /* 干玫瑰 */
+.t-confess  { --brass: #A8874E; --brass-soft: #F0E9D6; }   /* 陈金 */
+.t-family   { --brass: #9E6A45; --brass-soft: #F2E7DD; }   /* 赭石 */
+.t-vent     { --brass: #6E7F6A; --brass-soft: #E7ECE5; }   /* 灰绿 */
+.t-birthday { --brass: #786292; --brass-soft: #EBE6F1; }   /* 暗紫 */
+.t-apology  { --brass: #5D6D80; --brass-soft: #E6EAEE; }   /* 青灰 */
+.t-thanks   { --brass: #8A7A4E; --brass-soft: #EFEBDB; }   /* 橄榄金 */
+
+/* 同样五个场合在夜里的版本：色相不变，明度提上来。 */
+.night.t-wedding  { --brass: #C4767E; --brass-soft: #2A1C1E; }
+.night.t-confess  { --brass: #C2A264; --brass-soft: #241F16; }
+.night.t-family   { --brass: #C08659; --brass-soft: #271C15; }
+.night.t-vent     { --brass: #8FA88A; --brass-soft: #1B2019; }
+.night.t-birthday { --brass: #9A82B8; --brass-soft: #201B29; }
+.night.t-apology  { --brass: #7C90A6; --brass-soft: #1A1F26; }
+.night.t-thanks   { --brass: #B0A06A; --brass-soft: #201E14; }
+
+.page {
+  min-height: 100vh;
+  padding: 150rpx 64rpx 96rpx;
+  box-sizing: border-box;
+  background: var(--paper);
+  /* color 必须在这里再声明一次。page 根节点上的 color: var(--ink) 是在根节点
+     解析的，子元素继承到的是"已经算好的那个色值"，不会因为 .night 改了 --ink
+     就重算 —— 换肤时正文会留在浅色模式的墨色上。变量本身是继承的，
+     所以在挂着 .night 的这一层重新取一次 var(--ink) 就对了。 */
+  color: var(--ink);
+}
+
+/* 幕次标。宽字距的小字 + 一根短界栏，戏单上标幕次就是这么排的。 */
+.eyebrow {
+  font-family: var(--serif);
+  font-size: 23rpx;
+  color: var(--brass);
+  letter-spacing: 8rpx;
+  text-indent: 8rpx;
+  padding-bottom: 26rpx;
+  border-bottom: 1rpx solid var(--rule);
+  margin-bottom: 56rpx;
+}
+
+/* 正标题走衬线。黑体大字是 App 的长相，衬线才是印出来的。 */
+.h1 {
+  /* 标题里用 {{'\n'}} 手动断行，没有这句就会挤成一行 */
+  white-space: pre-line;
+  font-family: var(--serif);
+  font-size: 58rpx;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 2rpx;
+}
+
+.sub {
+  white-space: pre-line;
+  margin-top: 30rpx;
+  font-size: 28rpx;
+  line-height: 1.9;
+  color: var(--ink-soft);
+}
+
+.muted { color: var(--muted); font-size: 25rpx; line-height: 1.7; }
+
+/* 界栏。装饰性的那根线，永远 1rpx。 */
+.rule { height: 1rpx; background: var(--rule); }
+
+/* 主按钮：直角。圆角是 App 的语言，铅字排出来的东西没有圆角。
+   字距拉开到能读出仪式感，text-indent 补掉末字后面多出来的那一格。 */
+.btn {
+  margin-top: 72rpx;
+  height: 104rpx;
+  line-height: 104rpx;
+  text-align: center;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--serif);
+  font-size: 30rpx;
+  letter-spacing: 14rpx;
+  text-indent: 14rpx;
+}
+.btn[disabled] { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1rpx var(--rule); }
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1rpx var(--ink);
+}
+
+.link {
+  margin-top: 40rpx;
+  text-align: center;
+  font-size: 25rpx;
+  color: var(--muted);
+  letter-spacing: 2rpx;
+}
+
+/* 输入区：不描一圈框，只在底下压一根线 —— 稿纸的做法，比方框轻得多。 */
+.field {
+  margin-top: 40rpx;
+  padding: 8rpx 0 28rpx;
+  min-height: 240rpx;
+  width: 100%;
+  box-sizing: border-box;
+  background: transparent;
+  border-bottom: 1rpx solid var(--rule);
+  font-family: var(--serif);
+  font-size: 31rpx;
+  line-height: 1.95;
+  /* 编辑态是 textarea、非编辑态是 view，两者共用这个盒子，
+     所以换行行为要对齐，否则切换的一瞬间文字会跳。 */
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 场合标签：直角、只有一根细边，选中了才上那点金。 */
+.chips { display: flex; flex-wrap: wrap; gap: 0; margin-top: 44rpx; }
+.chip {
+  padding: 18rpx 0;
+  margin-right: 44rpx;
+  font-family: var(--serif);
+  font-size: 27rpx;
+  color: var(--muted);
+  letter-spacing: 3rpx;
+  border-bottom: 1rpx solid transparent;
+}
+.chip.on {
+  color: var(--brass);
+  border-bottom-color: var(--brass);
+}
+
+/* 按压反馈。之前一个都没有 —— 按下去没动静，人第一反应是"我没点上"，
+   而真出问题的时候（点击被别的图层吃掉）也就完全看不出来。
+   只压不移：位移在这套排版里太吵，压暗一档就够。 */
+.pressed { opacity: .55; }
+
+/* ── 圆角面板 ─────────────────────────────────────────────
+   整册书原本一个圆角都没有，这是唯一的例外，而且只用在**要填的东西**上：
+   输入框、可选项、搜索结果。
+   理由：这几处是交互，不是排版。直角的输入框在手机上读起来像表格的一格，
+   不像一个可以点进去写字的地方 —— 而这一页的全部工作就是让人愿意动手。
+   排版本身（幕次标、标题、正文、界栏）一律保持直角，那一半不动。 */
+.lbl {
+  margin-top: 52rpx;
+  font-family: var(--serif);
+  font-size: 27rpx;
+  letter-spacing: 2rpx;
+  color: var(--ink-soft);
+}
+.lbl .opt { font-size: 21rpx; color: var(--muted); letter-spacing: 0; }
+
+.panel {
+  margin-top: 20rpx;
+  width: 100%;
+  box-sizing: border-box;
+  /* 高度必须显式给。<input> 的默认高度只有一行字那么高，
+     再加上纵向 padding，内容被挤出可视区 —— 表现就是"框被压扁、字看不见"。
+     单行的面板用固定高度 + 只留左右 padding，纵向居中交给 input 自己。 */
+  height: 100rpx;
+  padding: 0 30rpx;
+  background: var(--paper-sunk);
+  border-radius: 22rpx;
+  font-family: var(--serif);
+  font-size: 30rpx;
+  color: var(--ink);
+}
+/* 多行的那一块反过来：高度自撑，纵向 padding 和行高都要。 */
+.panel.tall {
+  height: auto;
+  min-height: 340rpx;
+  padding: 28rpx 30rpx;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 可选项。默认选中的是「不指定」——「可选」不该靠"你可以不选"来表达，
+   该靠"默认就是不指定"来表达：取消是一个正向动作，不用猜再点一下行不行。 */
+.pills { display: flex; flex-wrap: wrap; gap: 18rpx; margin-top: 22rpx; }
+.pill {
+  padding: 14rpx 30rpx;
+  border-radius: 999rpx;
+  box-shadow: inset 0 0 0 1rpx var(--rule);
+  font-family: var(--serif);
+  font-size: 27rpx;
+  letter-spacing: 2rpx;
+  color: var(--ink-soft);
+}
+/* 选中用固定的干玫瑰，不跟着场合的那点金走。
+   跟着 --brass 走的话，选中「不指定」时没有场合、落回默认的陈金，
+   看着像个高亮的标签而不是"被选中了"。这一颗要的是态度，不是配色。 */
+.pill.on {
+  background: var(--sel);
+  box-shadow: none;
+  color: var(--paper);
+}
+
+/* 搜索结果：一整块面板，行与行之间一根界栏。 */
+.panel-list {
+  margin-top: 20rpx;
+  border-radius: 20rpx;
+  box-shadow: inset 0 0 0 1rpx var(--rule);
+  overflow: hidden;
+}
+.panel-list .row { display: flex; align-items: center; padding: 22rpx 24rpx; }
+.panel-list .row + .row { border-top: 1rpx solid var(--rule); }

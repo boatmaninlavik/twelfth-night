@@ -1,0 +1,46 @@
+<!-- 扉页。
+     主角是产品不是莎士比亚：题名占大字号，引文降到小字、加引号、破折号署名 ——
+     引文是题记（epigraph），不是标语。 -->
+<view class="page title-page {{mode}}">
+
+  <!-- 明暗。半填的圆是印刷上标墨色深浅的老记号，不用画太阳月亮。 -->
+  <view class="mode" bindtap="flip" hover-class="pressed" hover-start-time="0" hover-stay-time="90"><view class="half"></view></view>
+
+  <view class="plate">
+    <!-- 冠：仲夏花环，环心是十二道芒的星（四长八短，正好十二）。 -->
+    <view class="crest">
+      <wreath />
+      <view class="star">
+        <view class="ray {{item.long ? 'long' : ''}}" wx:for="{{rays}}" wx:key="deg"
+              style="transform: rotate({{item.deg}}deg)"></view>
+      </view>
+    </view>
+
+    <view class="wordmark">十二夜</view>
+
+    <view class="epigraph">“若音乐为爱之滋养，请勿停歇。”</view>
+    <view class="epigraph-en">If music be the food of love, play on</view>
+    <view class="attrib">— 莎士比亚《第十二夜》</view>
+
+    <view class="lede">用自己的声音，{{'\n'}}唱出你的心声。</view>
+
+    <!-- 第一次来的人只有一个门：「开 始」。多给一个选择，等于让他在还不知道
+         这是什么的时候先做一道选择题。
+         做过歌之后换成左右两扇。**没有方框** —— 并排两个方框是跳房子，
+         中间只留一根 1rpx 的竖界栏，跟全册的横界栏是同一根线。
+         上下排过一版，不如左右：左右一眼能同时看见两个选择，上下要读两行。 -->
+    <view wx:if="{{!returning}}" class="enter" bindtap="start" hover-class="pressed" hover-start-time="0" hover-stay-time="90">开 始</view>
+
+    <view wx:else class="doors">
+      <view class="door" bindtap="start" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
+        <view class="mark"><image class="crown" src="{{crown}}" mode="aspectFit" /></view>
+        <view class="door-label">定 歌</view>
+      </view>
+      <view class="door hair" bindtap="mine" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
+        <view class="mark"><image class="clown" src="{{face}}" mode="aspectFit" /></view>
+        <view class="door-label">我 的</view>
+      </view>
+    </view>
+  </view>
+
+</view>

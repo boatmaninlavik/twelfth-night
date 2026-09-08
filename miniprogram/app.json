@@ -1,0 +1,22 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/order/order",
+    "pages/story/story",
+    "pages/record/record",
+    "pages/song/song",
+    "pages/mine/mine"
+  ],
+  "window": {
+    "navigationStyle": "custom",
+    "backgroundColor": "#F7F4ED",
+    "backgroundTextStyle": "dark"
+  },
+  "permission": {
+    "scope.record": {
+      "desc": "用于录制你的声音，生成只属于你的歌"
+    }
+  },
+  "requiredPrivateInfos": [],
+  "sitemapLocation": "sitemap.json"
+}

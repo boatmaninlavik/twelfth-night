@@ -1,0 +1,25 @@
+# 依赖
+node_modules/
+miniprogram/node_modules/
+
+# 密钥。server/.env 里有 Gemini、微信 AppSecret、Supabase service-role key、
+# kie.ai 的 key —— service-role key 能绕过 RLS 读写整个库，绝不能进版本库。
+.env
+.env.*
+!.env.example
+
+# 开发者工具的本地配置（含本机路径和个人设置）
+project.private.config.json
+
+# 试听样本：39 MB 的 mp3，是产物不是源码。
+# 其中 B_少抬弱音.mp3 是定下 VOCAL_TARGET_DB 那条基线的参考版本，
+# 要留档的话建议放对象存储，不要塞进 git。
+试听/
+
+*.log
+__pycache__/
+*.pyc
+.DS_Store
+
+# 内部排障手记，含供应商与模型细节，不进公开仓库
+MUFFLE-HANDOFF.md

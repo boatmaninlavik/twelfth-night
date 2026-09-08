@@ -1,0 +1,21 @@
+/* .back 是 absolute 的，全局 .page 没有定位上下文，得在这一层给出来。 */
+.story { position: relative; }
+
+.back {
+  position: absolute;
+  left: 40rpx;
+  width: 64rpx;
+  display: flex; align-items: center; justify-content: center;
+}
+.chev {
+  width: 22rpx; height: 22rpx;
+  border-left: 1rpx solid var(--ink);
+  border-bottom: 1rpx solid var(--ink);
+  transform: rotate(45deg);
+  margin-left: 8rpx;            /* 转 45 度后视觉重心偏右，往回挪一点才居中 */
+}
+
+/* 非编辑态那个 view 和编辑态的 textarea 共用 .panel.tall，
+   两者的换行行为必须一致，否则切换的一瞬间文字会跳。 */
+.panel.tall { margin-top: 44rpx; }
+.is-ph, .ph { color: #B8B1A0; }

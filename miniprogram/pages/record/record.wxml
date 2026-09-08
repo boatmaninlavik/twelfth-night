@@ -1,0 +1,26 @@
+<view class="page t-{{theme}} {{mode}}">
+  <view class="eyebrow">声音</view>
+
+  <view class="h1">跟着唱一遍</view>
+
+  <!-- 音阶用唱名排，宽字距摊开 —— 这是这一页的主视觉，当乐谱排，不当说明文字 -->
+  <view class="scale">do re mi fa sol la si do</view>
+  <view class="rule scale-rule"></view>
+  <view class="gloss">从最低唱到最高，慢一点，约二十秒</view>
+
+  <view class="mic-wrap">
+    <view class="mic {{recording ? 'on' : ''}}" bindtap="toggle" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
+      <view class="dot"></view>
+    </view>
+    <view class="timer" wx:if="{{recording}}">{{elapsed}}″</view>
+    <view class="muted" wx:elif="{{!filePath}}">点一下开始</view>
+  </view>
+
+  <block wx:if="{{filePath && !recording}}">
+    <view class="btn btn-ghost" bindtap="play" hover-class="pressed" hover-start-time="0" hover-stay-time="90">听 一 下（{{duration}}″）</view>
+    <view class="btn" bindtap="submit" disabled="{{busy}}" hover-class="pressed" hover-start-time="0" hover-stay-time="90">{{busy ? '上 传 中' : '就 用 这 段'}}</view>
+    <view class="link" bindtap="reset" hover-class="pressed" hover-start-time="0" hover-stay-time="90">重录</view>
+  </block>
+
+  <view class="notice">这段录音只用于生成你的声线，随时可删除。</view>
+</view>
