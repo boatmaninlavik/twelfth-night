@@ -43,8 +43,8 @@
   font-family: var(--serif);
   font-size: 56rpx;
   font-weight: 600;
-  letter-spacing: 6rpx;
-  text-indent: 6rpx;
+  letter-spacing: 8rpx;
+  text-indent: 8rpx;
   color: var(--ink);
 }
 .head-meta {

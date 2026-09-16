@@ -1,0 +1,161 @@
+/* 定调页。
+   骨架照抄提词卡那一屏：同一类交互（一列可点的行，点中即走），
+   就该是同一个长相。这一册书里不另起第二套列表样式。 */
+
+/* 返回键。跟 order / story / song / mine 完全一致 —— 同一个键在每页
+   都该长一样、在同一个位置。 */
+.back {
+  position: absolute;
+  left: 40rpx;
+  width: 64rpx;
+  display: flex; align-items: center; justify-content: center;
+}
+.chev {
+  width: 22rpx; height: 22rpx;
+  border-left: 1rpx solid var(--ink);
+  border-bottom: 1rpx solid var(--ink);
+  transform: rotate(45deg);
+  margin-left: 8rpx;
+}
+
+.h1 {
+  font-family: var(--serif);
+  font-size: 58rpx;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 2rpx;
+}
+
+.sub {
+  margin-top: 22rpx;
+  font-size: 28rpx;
+  line-height: 1.9;
+  color: var(--ink-soft);
+}
+
+/* 小节标题 —— 用的是眉题那一套（衬线、大字距、极小号），
+   但不带下框线：框线由紧跟着的列表自己起头，两根会撞。 */
+.sec-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 52rpx;
+}
+.sec-gap { margin-top: 64rpx; }
+.sec-t {
+  font-family: var(--serif);
+  font-size: 24rpx;
+  letter-spacing: 8rpx;
+  text-indent: 8rpx;
+  color: var(--muted);
+}
+.sec-x {
+  padding: 8rpx 4rpx;
+  font-size: 25rpx;
+  letter-spacing: 2rpx;
+  color: var(--brass);
+}
+
+/* 行之间只用一根界栏分开，不做卡片、不做圆角、不做阴影 ——
+   圆角在这套语言里只留给"要填的东西"（下面那个搜索框就是）。 */
+.list {
+  margin-top: 20rpx;
+  border-top: 1rpx solid var(--rule);
+}
+
+/* 歌：名字在前，歌手压在后面小一号。一行一首，好扫。 */
+.song {
+  display: flex;
+  align-items: baseline;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid var(--rule);
+}
+.song-n {
+  font-family: var(--serif);
+  font-size: 30rpx;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.song-a {
+  margin-left: 16rpx;
+  font-size: 24rpx;
+  color: var(--muted);
+}
+
+/* 声音卡：两行，第二行是给非音乐人士的锚点 ——
+   「适合放在车里听」比「100-120 BPM」有用得多，它才是这一页能不能被看懂的关键。 */
+.card {
+  padding: 28rpx 0;
+  border-bottom: 1rpx solid var(--rule);
+}
+.card-t {
+  font-family: var(--serif);
+  font-size: 30rpx;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.card-eg {
+  margin-top: 10rpx;
+  font-size: 25rpx;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* 搜索框直接用全局 .panel（见 app.wxss），这里只补占位符的颜色 ——
+   跟定歌页的 .ph 是同一个值。
+   原来这儿自写了一个 .q：纵向 padding 把 <input> 的内容挤出可视区，
+   框被压扁、字只剩上下两条边；而且 .q-ph 引的 --faint 根本没定义过。
+   两个毛病都是"另起一套"带来的，删掉就都没了。 */
+.ph { color: #B8B1A0; }
+
+.hint {
+  margin-top: 20rpx;
+  font-size: 25rpx;
+  color: var(--muted);
+}
+
+/* 上一页已经选过的那首：摆在最上面，配一个实心按钮直接走。 */
+.picked {
+  margin-top: 52rpx;
+  padding-top: 32rpx;
+  border-top: 1rpx solid var(--rule);
+}
+.picked-k {
+  font-family: var(--serif);
+  font-size: 22rpx;
+  letter-spacing: 8rpx;
+  text-indent: 8rpx;
+  color: var(--muted);
+}
+.picked-song {
+  margin-top: 18rpx;
+  font-family: var(--serif);
+  font-size: 44rpx;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ink);
+}
+.picked-artist {
+  margin-top: 8rpx;
+  font-size: 26rpx;
+  color: var(--muted);
+}
+.picked .btn { margin-top: 44rpx; }
+
+.link {
+  margin-top: 24rpx;
+  padding: 24rpx 0;
+  text-align: center;
+  font-size: 26rpx;
+  letter-spacing: 2rpx;
+  color: var(--muted);
+}
+
+.foot {
+  margin-top: 48rpx;
+  padding-top: 28rpx;
+  border-top: 1rpx solid var(--rule);
+  font-size: 23rpx;
+  line-height: 1.9;
+  color: var(--muted);
+}

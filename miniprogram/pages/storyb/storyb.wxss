@@ -1,0 +1,198 @@
+/* 故事页 · 2b 圆签。
+   .panel / .tools / .marks / .tally 这些蹭 story.wxss 和 app.wxss 的同名类，
+   这里只写这一版独有的。 */
+
+@import "../story/story.wxss";
+
+/* ── 六个圆签 ──────────────────────────────────────────
+   **真的画成圆**，不是胶囊。
+   胶囊的宽度随字数变，六个长短不一排出来又是一排参差 ——
+   而这一版的全部主张就是"一眼扫完"。圆是等宽的，
+   两列三行立得住，这一点恰恰是它比胶囊好的地方。
+
+   这是全册唯一在"不是输入框"的东西上用圆角的地方。破例的理由：
+   签就是圆的，方的签不叫签。 */
+.dots {
+  margin-top: 56rpx;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 44rpx 60rpx;
+}
+
+.dot {
+  /* flex: none 是必须的，不是保险。
+     flex 项默认可以收缩（flex-shrink: 1）—— 一行放不下的时候，
+     浏览器会把宽度压掉而**高度一动不动**，圆就成了椭圆。
+     底下那排五个圆挤在一行时正是这么被压扁的。 */
+  flex: none;
+  width: 200rpx; height: 200rpx;
+  box-sizing: border-box;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1rpx var(--rule);
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 27rpx;
+  letter-spacing: 3rpx;
+  text-indent: 3rpx;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+/* 答过的填成实心。这就是进度，不必另做进度条。 */
+.dot.done {
+  background: var(--sel);
+  box-shadow: none;
+  color: var(--paper);
+}
+
+/* 答题页题目左边那个小圆：让人一眼知道自己在答哪一个，
+   不必靠记忆把上一屏的选择接上。 */
+.dot.sm {
+  flex: none;
+  width: 136rpx; height: 136rpx;
+  font-size: 23rpx;
+  letter-spacing: 1rpx;
+  text-indent: 1rpx;
+}
+
+/* 底下那排可直接跳的：更小，不抢主体。 */
+.dot.xs {
+  width: 96rpx; height: 96rpx;
+  font-size: 22rpx;
+  letter-spacing: 0;
+  text-indent: 0;
+}
+
+.count {
+  margin-top: 44rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--muted);
+}
+.count-link { margin-left: 8rpx; color: var(--muted); }
+
+
+/* ── 答一个 ────────────────────────────────────────────
+   小圆和题目并排。题目靠左对齐、两行以内 —— 长过两行就该改题面，
+   不该靠这儿硬塞。 */
+.ask-head {
+  margin-top: 44rpx;
+  display: flex;
+  align-items: center;
+  gap: 28rpx;
+}
+.ask-q {
+  flex: 1;
+  white-space: pre-line;
+  font-family: var(--serif);
+  font-size: 40rpx;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 1rpx;
+  color: var(--ink);
+}
+
+/* 输入框：**直角**，浅底，一根细边。
+   跟全册其它输入框（圆角 22rpx 的 .panel）不同是有意的 ——
+   这一屏已经有六个圆了，再来一个圆角框，整屏没有一条直线，太软。 */
+.sheetbox {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 36rpx;
+  min-height: 300rpx;
+  padding: 26rpx 28rpx;
+  background: var(--paper-sunk);
+  box-shadow: inset 0 0 0 1rpx var(--rule);
+  font-family: var(--serif);
+  font-size: 30rpx;
+  line-height: 1.9;
+  color: var(--ink);
+}
+.sheetbox.is-ph { color: var(--muted); }
+
+/* 示例答落在框**下面**，不当占位符 ——
+   占位符一打字就没了，而这一句正是打到一半最想再看一眼的东西。 */
+.eg-line {
+  margin-top: 20rpx;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+/* ── 底下那排 ──────────────────────────────────────────
+   其余的签留在这儿可以直接跳过去，省掉一次"返回再点"。
+   这是这一版比一条线顺的地方。 */
+/* 五个圆 96rpx + 四个 20rpx 间距 = 560rpx，版心 622rpx，刚好放得下。
+   「接着答下一个」**不能跟它们同一行** —— 加上那六个字就是 704rpx，
+   一超版心，上面那些圆全被压扁。所以它单独占一行，右对齐。 */
+.rest {
+  margin-top: 56rpx;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+.rest-link {
+  margin-top: 28rpx;
+  text-align: right;
+  font-size: 24rpx;
+  letter-spacing: 1rpx;
+  color: var(--muted);
+}
+
+
+/* ── 合稿：问答成对 ────────────────────────────────────
+   一条一条列，界栏分开，不做卡片 —— 这一册书里没有卡片。
+
+   三级分明：签名最小最淡（它只是个标签）、问题次之（是上下文）、
+   答案最大最黑（那是用户自己的话，这一页的主角）。
+   原来只有答案一种字号，所以「长发飘扬」孤零零地立在那儿。 */
+.qa {
+  margin-top: 44rpx;
+  border-top: 1rpx solid var(--rule);
+}
+.qa-row {
+  padding: 32rpx 0;
+  border-bottom: 1rpx solid var(--rule);
+}
+.qa-k {
+  font-family: var(--serif);
+  font-size: 21rpx;
+  letter-spacing: 8rpx;
+  text-indent: 8rpx;
+  color: var(--brass);
+}
+.qa-q {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: var(--muted);
+}
+/* 答案本身。点一下就地变 textarea —— 不跳页、不开弹窗，
+   改一个字不该把人挪出这一页。 */
+.qa-a {
+  margin-top: 14rpx;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 56rpx;
+  font-family: var(--serif);
+  font-size: 30rpx;
+  line-height: 1.85;
+  color: var(--ink);
+}
+.qa-a.edit {
+  padding: 12rpx 16rpx;
+  margin-left: -16rpx;          /* 补掉内衬，编辑态和非编辑态的字对得上 */
+  background: var(--paper-sunk);
+}
+
+.qa-more {
+  margin-top: 28rpx;
+  text-align: right;
+  font-size: 24rpx;
+  color: var(--brass);
+}
+
+.free-k { margin-top: 56rpx; }
+.free-k + .panel { margin-top: 16rpx; }

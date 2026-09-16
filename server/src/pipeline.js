@@ -45,7 +45,20 @@ export async function runPipeline(order) {
 
   try {
     await set({ status: 'writing' });
-    const { title, lyrics, style } = await writeLyrics(order);
+    /* 这里必须**逐个映射**，不能直接把整行丢进去。
+       库里是 to_name / ref_song（下划线），writeLyrics 解构的是 toName / refSong
+       （驼峰）—— 原来 writeLyrics(order) 这两项永远是 undefined，后果是：
+         · 「送给：${toName}」永远落成「对方」，收信人的名字从没进过歌词；
+         · refSong 永远为空 → 永远走 STYLE_NO_REF，**参考歌这个功能从来没生效过**。
+       用户在定歌页挑了半天歌，对成品没有任何影响 —— "开盲盒"有一半是这么来的。 */
+    const { title, lyrics, style } = await writeLyrics({
+      story: order.story,
+      occasion: order.occasion,
+      toName: order.to_name,
+      fromName: order.from_name,
+      refSong: order.ref_song,
+      tune: order.tune,
+    });
     await set({ status: 'generating', title, lyrics, style });
 
     const { taskId } = await generate({ lyrics, style, title });
@@ -54,6 +67,15 @@ export async function runPipeline(order) {
     const songUrl = await waitForSong(taskId);
     // Wave 1 is live from here: the mini program can play song_url already.
     await set({ status: 'generated', song_url: songUrl });
+
+    // 用户拒绝了声音授权 —— 这一单没有第二波，原版就是成品。
+    // 在这儿收尾有两个理由：一是不收尾的话订单永远停在 awaiting_voice，
+    // 用户看到的是一首做不完的歌；二是分轨要花 10 个 credit，
+    // 而这一单根本用不上那两条轨。
+    if (order.use_own_voice === false) {
+      await set({ status: 'done' });
+      return;
+    }
 
     // Separation is the 10-credit `separate_vocal` tier — two stems, no isolated
     // backing vocals. If harmonies end up sounding converted and wrong, this is the

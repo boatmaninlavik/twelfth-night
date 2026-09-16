@@ -1,27 +1,125 @@
 <view class="page story t-{{theme}} {{mode}}" style="padding-top:{{padTop}}rpx">
 
-  <!-- 返回。top 跟右上角胶囊对齐（utils/nav.js）。 -->
+  <!-- 返回。top 跟右上角胶囊对齐（utils/nav.js）。
+       这个键在页内退（提词卡 ← 三问 ← 合稿），退到头才真的出页 —— 见 story.js back()。 -->
   <view class="back" style="top:{{navTop}}rpx;height:{{navSize}}rpx"
         bindtap="back" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
     <view class="chev"></view>
   </view>
 
-  <view class="eyebrow">故 事</view>
-  <view class="h1">说说这个人/事</view>
-  <view class="sub">这一段将是整首歌的内容</view>
+  <!-- 幕次标就是进度条。这册书里没有进度条。 -->
+  <view class="eyebrow">{{eyebrow}}</view>
 
-  <!-- textarea 是原生组件：不在 WebView 里画，而是盖在上面的独立图层，
-       层级最高、z-index 压不住它，页面一滚它的位置就可能同步不上，
-       把下面的东西整片挡死（下一步按钮点不动就是这么来的）。
-       所以只在真正打字的那一刻才挂它，其余时候页面上一个原生组件都没有。
 
-       不写 value 是另一件事：绑上去等于每敲一个字整段文字跨一次线程再重渲一次。
-       文字由 textarea 自己保管，逻辑层只在 this._story 留一份，失焦时才回填。 -->
-  <textarea wx:if="{{writing}}" class="panel tall" focus
-            placeholder="不用写得漂亮，真诚就好" placeholder-class="ph"
-            bindinput="onStory" bindblur="stopWriting"
-            maxlength="800" auto-height="{{false}}" />
-  <view wx:else class="panel tall {{storyText ? '' : 'is-ph'}}" bindtap="startWriting">{{storyText || '不用写得漂亮，真诚就好'}}</view>
+  <!-- ══ 幕一 · 一条线 ══════════════════════════════════
+       原来这儿是四张提词卡并排让人挑。那是一次**选择过载**：
+       四张卡长短不一，排出来是一堵字墙；而且"挑一张"这个动作本身没有产出 ——
+       用户花掉一次决策，换来的只是"开始答第一题"。
 
-  <view class="btn" bindtap="next" hover-class="pressed" hover-start-time="0" hover-stay-time="90">下 一 步</view>
+       现在是一条线上的三节，直接对上一首歌的形状：
+         开头 → 主歌一　　后来 → 主歌二　　想说的话 → 副歌
+       用户看到的不是三道题，是**这首歌会长成什么样**。
+
+       点实心 = 答过了、空心 = 还没答，这就是进度，不必另做进度条。
+       三节不按顺序强推，想先答哪节就先答哪节。 -->
+  <block wx:if="{{step === 'line'}}">
+    <view class="h1">这首歌怎么走</view>
+    <view class="sub">三段，答完就是一首歌的形状{{'\n'}}哪段先答都行，答不上来可以跳过</view>
+
+    <view class="line">
+      <view class="node {{item.done ? 'done' : ''}} {{index === nodes.length - 1 ? 'last' : ''}}"
+            wx:for="{{nodes}}" wx:key="k" data-k="{{item.k}}"
+            bindtap="openSlot" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
+        <view class="node-k">{{item.label}}</view>
+        <view class="node-q">{{item.q}}</view>
+        <view class="node-a" wx:if="{{item.done}}">{{item.answer}}</view>
+        <view class="node-empty" wx:else>{{item.hint}}</view>
+      </view>
+    </view>
+
+    <view class="btn" wx:if="{{answered}}" bindtap="toDone" hover-class="pressed" hover-start-time="0" hover-stay-time="90">写好了</view>
+    <view class="link" bindtap="toFree" hover-class="pressed" hover-start-time="0" hover-stay-time="90">不答这些 · 我自己写一段</view>
+  </block>
+
+
+  <!-- ══ 幕二 · 一问一答 ════════════════════════════════ -->
+  <block wx:elif="{{step === 'ask'}}">
+    <view class="h1">{{title}}</view>
+    <!-- 第一问的 gloss 是示例答，已经挪进输入框当占位符了（见 story.js 的 toAsk），
+         所以这一行只在 gloss 真有内容时才出现 —— 那是第二、三问的指导语。 -->
+    <view class="sub" wx:if="{{gloss}}">{{gloss}}</view>
+
+    <!-- textarea 是原生组件：不在 WebView 里画，而是盖在上面的独立图层，
+         层级压不住它，页面一滚位置就可能同步不上，把下面的东西整片挡死
+         （下一步按钮点不动就是这么来的）。所以只在真正打字的那一刻才挂它。
+
+         这里绑了 value —— 原版故意不绑，因为绑上等于每敲一个字整段文字跨一次
+         线程再重渲一次。但 answer 只在失焦和换题时才 setData，打字过程中一次
+         都不动，所以绑是安全的；而且必须绑，退回上一问时框里得有上次写的字。
+         cursor 放到末尾，不然光标会停在第 0 个字前面。 -->
+    <textarea wx:if="{{writing}}" class="panel mid" focus
+              value="{{answer}}" cursor="{{answer.length}}"
+              placeholder="{{ph}}" placeholder-class="ph"
+              bindinput="onInput" bindblur="stopWriting"
+              maxlength="600" auto-height="{{false}}" />
+    <view wx:else class="panel mid {{answer ? '' : 'is-ph'}}"
+          bindtap="startWriting">{{answer || ph}}</view>
+
+    <!-- 答不上来往往不是没话说，是这个问法不对。「换个问法」比「跳过」有用得多。 -->
+    <view class="tools">
+      <view class="tool" bindtap="swapQ" hover-class="pressed" hover-start-time="0" hover-stay-time="90">换个问法</view>
+    </view>
+
+    <!-- 「记下了」—— 把他自己写的具体东西挑出来还给他。
+         挑不出两个就整块不出现：没有反馈好过一行胡说八道的反馈（utils/marks.js）。 -->
+    <view class="marks" wx:if="{{hits.length}}">
+      <view class="marks-label">记下了</view>
+      <view class="marks-list">
+        <text wx:for="{{hits}}" wx:key="*this">{{index > 0 ? ' · ' : ''}}{{item}}</text>
+      </view>
+      <view class="marks-note">这些会长进歌词里，「我很想她」不会</view>
+    </view>
+
+    <!-- 示例答。示范的是颗粒度，不是文采 —— 所以故意写得有点笨。 -->
+    <view class="egs" wx:elif="{{egs.length}}">
+      <view class="egs-label">别人这么答</view>
+      <view class="eg" wx:for="{{egs}}" wx:key="*this">— {{item}}</view>
+    </view>
+
+    <!-- 「记下」和「跳过」走同一条路（都回那条线）——
+         区别只在措辞：答了的人点上面那个，答不上的人点下面那个，
+         谁都不用觉得自己是在放弃。 -->
+    <view class="btn" bindtap="doneAsk" hover-class="pressed" hover-start-time="0" hover-stay-time="90">记下</view>
+    <view class="link" bindtap="doneAsk" hover-class="pressed" hover-start-time="0" hover-stay-time="90">这段先跳过</view>
+  </block>
+
+
+  <!-- ══ 幕三 · 合稿 ════════════════════════════════════
+       这一页解决"我到底给了它什么"的不透明感，也保留原来那个自由编辑的大框。 -->
+  <block wx:else>
+    <view class="h1">这就是你说的</view>
+    <view class="sub">可以直接改，这一段会写成整首歌的词</view>
+
+    <textarea wx:if="{{writing}}" class="panel tall" focus
+              value="{{storyText}}" cursor="{{storyText.length}}"
+              placeholder="不用写得漂亮，真诚就好" placeholder-class="ph"
+              bindinput="onInput" bindblur="stopWriting"
+              maxlength="800" auto-height="{{false}}" />
+    <view wx:else class="panel tall {{storyText ? '' : 'is-ph'}}"
+          bindtap="startWriting">{{storyText || '不用写得漂亮，真诚就好'}}</view>
+
+    <view class="tools" wx:if="{{canRestack}}">
+      <view class="tool" bindtap="restack" hover-class="pressed" hover-start-time="0" hover-stay-time="90">按新答案重排</view>
+    </view>
+
+    <!-- 不拦人：答得少照样能下一步，只在这儿轻轻递一句。 -->
+    <view class="tally" wx:if="{{tally >= 2}}">
+      <view class="tally-n">记下了 {{tally}} 个只有你知道的细节</view>
+      <view class="tally-note">再给一个，这首歌会更像 ta</view>
+    </view>
+
+    <view class="btn btn-ghost" bindtap="askMore" hover-class="pressed" hover-start-time="0" hover-stay-time="90">再问我一个</view>
+    <view class="btn stack" bindtap="next" hover-class="pressed" hover-start-time="0" hover-stay-time="90">下一步</view>
+  </block>
+
 </view>

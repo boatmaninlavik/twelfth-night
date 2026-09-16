@@ -15,7 +15,10 @@
  */
 const KEY = 'tn-songs';
 const MAX = 60;                        // 存不下无所谓，但别让 storage 无限长
-const STALE = 7 * 24 * 3600 * 1000;    // 超过这个岁数就不再自动跳回去了
+const STALE = 7 * 24 * 3600 * 1000;    // 做好了还没看过的，这么久之内都还送
+// 还在做的只送这么久。做一首约一天，超过一天半基本就是卡住了 ——
+// 再往那一页送就不是服务，是把人锁在一张永远转不完的等待页上。
+const MAKING_MAX = 36 * 3600 * 1000;
 
 function list() {
   try {
@@ -61,8 +64,15 @@ function has() { return list().length > 0; }
  */
 function pending() {
   const now = Date.now();
-  return list().find((x) => !x.seen && x.state !== 'failed'
-                            && now - (x.createdAt || 0) < STALE) || null;
+  return list().find((x) => {
+    if (x.seen || x.state === 'failed') return false;
+    const age = now - (x.createdAt || 0);
+    // 做好了、还没看过的：一直送。这是整个产品的高光时刻，别错过。
+    if (x.state === 'done') return age < STALE;
+    // 还在做的：只在合理的制作时长内送。
+    // 原来这两种情况共用 7 天那一道闸，结果是一单卡住就把扉页劫持一星期。
+    return age < MAKING_MAX;
+  }) || null;
 }
 
 module.exports = { list, add, patch, has, pending };

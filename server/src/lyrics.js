@@ -56,6 +56,42 @@ const OCCASION_HINT = {
  * 名字一旦进了 style，Suno 会以 SENSITIVE_WORD_ERROR 整单拒掉 ——
  * 那不是"效果差一点"，是这一单直接做不出来。所以不能只靠 prompt 里那句禁令。
  */
+/**
+ * 把收信人的名字从歌词里抹掉。
+ *
+ * prompt 里已经明令禁止了，但禁令**挡不住偶发** —— 模型十次里漏一次，
+ * 那一次就是一首带着「小美」两个字、唱起来拗口的歌，而且用户拿到之前
+ * 没有任何人会发现。所以这里再落一道。
+ *
+ * **不能用"词边界"那一套。** 中文没有空格，名字前后几乎永远紧挨着汉字，
+ * 「前后不是汉字」这个条件等于永不触发 ——「我把伞留给小美」一个字都抹不掉。
+ * 所以按**位置**分情况：
+ *
+ *   行首呼语  「小美，你还记得…」 → 连那个逗号一起去掉，只留「你还记得…」
+ *              换成「你」会撞出「你，你还记得」。
+ *   其余位置  「我把伞留给小美」   → 换成「你」
+ *
+ * 换完可能撞出「你你」，收一道。
+ *
+ * 单字名不处理：一个字的名字和普通字撞得太厉害（叫「安」的人，
+ * 「安静」「平安」全得遭殃），抹了比留着伤害更大。
+ * 两字名仍可能撞（叫「小红」的，「小红花」会变成「你花」）—— 概率低，
+ * 而且比把名字留在歌里好。
+ */
+function stripToName(lyrics, toName) {
+  const n = String(toName || '').trim();
+  if (n.length < 2) return lyrics;
+  const esc = n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return String(lyrics)
+    .split('\n')
+    .map((line) => line
+      .replace(new RegExp(`^${esc}[，,、]\\s*`), '')
+      .replace(new RegExp(esc, 'g'), '你')
+      .replace(/你{2,}/g, '你')
+      .trim())
+    .join('\n');
+}
+
 function stripNames(style, refSong) {
   let out = String(style || '').trim();
   for (const n of [refSong?.name, refSong?.artist]) {
@@ -77,7 +113,28 @@ function stripNames(style, refSong) {
  * lyrics 用 Suno 的段落标记（[Verse] / [Chorus]）—— customMode 下 prompt 字段
  * 是逐字唱出来的，任何不是歌词的东西都会被唱进去。
  */
-export async function writeLyrics({ story, occasion, toName, fromName, refSong }) {
+/**
+ * 用户在定调页挑的那张声音卡。
+ *
+ * 它比参考歌更硬：参考歌是"翻译给你听"，声音卡是用户**直接指定**的听感，
+ * 所以这段约束放在最后、措辞最重。没选就是空字符串，整段不出现 ——
+ * 不指定是允许的（定歌页的「不指定」是同一个立场）。
+ *
+ * 和参考歌同时存在时以声音卡为准：用户在定调页看见了参考歌那一张、
+ * 却偏偏挑了别的，那就是明确的改主意。
+ */
+function tuneBlock(tune, refSong) {
+  const sound = String(tune?.sound || '').trim();
+  if (!sound) return '';
+  return `
+
+用户已经亲自指定了这首歌听起来该是什么样，**这是硬要求，必须照做**：
+${sound}
+${refSong?.name ? '（用户看过参考歌那一项之后仍然选了这个，以这里为准。）' : ''}
+style 字段要在这个框架之内写，不要另起炉灶。`;
+}
+
+export async function writeLyrics({ story, occasion, toName, fromName, refSong, tune }) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error('GEMINI_API_KEY is not set');
   const model = process.env.GEMINI_MODEL || 'gemini-3.1-pro-preview';
@@ -93,7 +150,7 @@ export async function writeLyrics({ story, occasion, toName, fromName, refSong }
   const prompt = `你在为一个人写一首送给另一个人的定制歌。写得好不好，决定这首歌是被听一次还是被留着。
 
 场合：${occasion || '未指定'}
-送给：${toName || '对方'}
+送给：${toName || '对方'}（**只给你理解关系用，名字绝不能出现在歌词里**）
 来自：${fromName || '我'}
 ${ref}
 
@@ -103,6 +160,10 @@ ${story}
 要求：
 - 中文歌词。**必须用故事里的具体细节** —— 具体的物、具体的时间、具体的动作。
   写"我爱你""好想你""你是我的光"这类句子等于没写。
+- **歌词里不许出现任何人的名字**，收信人的、写歌人的、故事里提到的，一个都不行。
+  一律用「你」「我」「她」「他」。中文名字两三个音节硬塞进旋律几乎一定会拗口，
+  而且名字一进去，这首歌就只剩当事人听得下去 —— 用「你」，听的人自己会对号入座。
+  故事里出现了名字就把它换成人称代词，别原样抄进去。
 - ${hint}
 - 结构：[Verse] / [Chorus] / [Verse] / [Chorus] / [Bridge] / [Chorus]
 - lyrics 是数组，**一行歌词一个元素**；[Verse] 这类段落标记也各占一个元素
@@ -110,7 +171,7 @@ ${story}
 - 副歌要能被记住，可以重复；最好有一个从故事里长出来的意象贯穿全曲
 - 不要解释，不要写注释，输出里除了歌词标记和歌词本身不要有别的字
 
-style 字段是给音乐模型看的英文声音描述。${refSong?.name ? STYLE_WITH_REF : STYLE_NO_REF}`;
+style 字段是给音乐模型看的英文声音描述。${refSong?.name ? STYLE_WITH_REF : STYLE_NO_REF}${tuneBlock(tune, refSong)}`;
 
   const res = await fetch(`${ENDPOINT}/${model}:generateContent`, {
     method: 'POST',
@@ -161,8 +222,11 @@ style 字段是给音乐模型看的英文声音描述。${refSong?.name ? STYLE
   const lines = Array.isArray(out.lyrics)
     ? out.lyrics
     : String(out.lyrics || '').split(/\r?\n/);          // 万一模型还是给了字符串
-  const lyrics = lines.map((l) => String(l).trim()).filter(Boolean).join('\n');
+  let lyrics = lines.map((l) => String(l).trim()).filter(Boolean).join('\n');
   if (!lyrics) throw new Error('gemini 没返回歌词');
+  // prompt 里禁了，这儿再抹一道 —— 禁令挡不住偶发，而漏掉的那一次
+  // 在用户拿到之前没有任何人会发现。
+  lyrics = stripToName(lyrics, toName);
 
   return {
     title: out.title || '无题',

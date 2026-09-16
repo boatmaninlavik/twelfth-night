@@ -63,8 +63,22 @@
 }
 
 /* 题记。加引号、降字号、破折号署名 —— 一看就知道是引别人的话，不是本店标语。 */
+/* 副标题。整个产品只有这一句话的位置，所以它必须**压得过**下面那句引文：
+   32rpx / ink-soft，比题记的 29rpx / ink-soft 大一档。
+   原来是 26rpx / muted —— 比莎士比亚还小还淡，主次是反的。
+   宋体，跟题名同族：它是题名的一部分，不是界面文字。 */
+.tagline {
+  white-space: pre-line;
+  margin-top: 34rpx;
+  font-family: var(--serif);
+  font-size: 32rpx;
+  line-height: 1.85;
+  letter-spacing: 2rpx;
+  color: var(--ink-soft);
+}
+
 .epigraph {
-  margin-top: 46rpx;
+  margin-top: 52rpx;
   font-family: var(--serif);
   font-size: 29rpx;
   line-height: 1.75;
@@ -87,25 +101,18 @@
   color: var(--muted);
 }
 
-.lede {
-  white-space: pre-line;
-  margin-top: 92rpx;
-  font-size: 26rpx;
-  line-height: 2;
-  letter-spacing: 1rpx;
-  color: var(--muted);
-}
-
-/* 扉页的按钮不实心：封面上压一个黑块太重，描一道线就够了。 */
+/* 扉页的按钮不实心：封面上压一个黑块太重，描一道线就够了。
+   上面那 92rpx 的留白原来挂在 .lede 上，.lede 挪走了就得由按钮自己补上 ——
+   不补的话按钮会直接贴到署名下面。 */
 .enter {
   align-self: stretch;
-  margin-top: 44rpx;
+  margin-top: 96rpx;
   height: 100rpx;
   line-height: 100rpx;
   font-family: var(--serif);
   font-size: 29rpx;
-  letter-spacing: 16rpx;
-  text-indent: 16rpx;
+  letter-spacing: 10rpx;
+  text-indent: 10rpx;
   color: var(--ink);
   box-shadow: inset 0 0 0 1rpx var(--ink);
 }
@@ -117,7 +124,7 @@
    所以是左右，但**外框全去掉**，中间只留一根界栏。 */
 .doors {
   align-self: stretch;
-  margin-top: 40rpx;
+  margin-top: 92rpx;          /* 同上：.lede 挪走后这块留白改由这里出 */
   display: flex;
 }
 .door {
@@ -152,8 +159,8 @@
   font-family: var(--serif);
   font-size: 42rpx;
   font-weight: 600;
-  letter-spacing: 14rpx;
-  text-indent: 14rpx;          /* 补掉末字后面多出来的那一格 */
+  letter-spacing: 10rpx;
+  text-indent: 10rpx;          /* 补掉末字后面多出来的那一格 */
   line-height: 1.2;
   color: var(--ink);
 }

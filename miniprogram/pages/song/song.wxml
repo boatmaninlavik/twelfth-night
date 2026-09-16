@@ -33,12 +33,19 @@
 
     <view class="clown-line">{{clown}}</view>
 
+    <!-- 这一句是定的，不随时段换：上面那句说的是"这会儿在忙什么"，
+         这一句说的是"这个小程序到底在干什么" —— 呼应扉页的副标题。
+         等待是全程最长的一段，人盯着这一屏的时间比别处都久，
+         所以这句话放在这儿比放在任何地方都被读得多。 -->
+    <view class="clown-sub">没有说出的那句话　让它有个调子</view>
+
     <!-- 费斯特在第二幕第三场唱的那首。剧里被真正唱出来的歌 ——
          扉页那句是被说出来的。 -->
     <view class="epigraph-en">Journeys end in lovers meeting</view>
 
     <view class="step">{{step}}…</view>
-    <view class="tip">大概需要一天左右。{{'\n'}}好了会通知你，{{'\n'}}这期间可以关掉小程序。</view>
+    <!-- 同样不收行末标点：三行都是居中的，行尾一个句号就够把那一行拽偏。 -->
+    <view class="tip">大概需要一天左右{{'\n'}}好了会通知你{{'\n'}}这期间可以关掉小程序</view>
   </block>
 
   <!-- ══ 出问题了 ══════════════════════════════════════ -->
@@ -46,7 +53,7 @@
     <view class="eyebrow">出了点问题</view>
     <view class="h1">这一首没能做成</view>
     <view class="sub">{{errMsg}}</view>
-    <view class="btn btn-ghost" bindtap="again" hover-class="pressed" hover-start-time="0">重 新 来 过</view>
+    <view class="btn btn-ghost" bindtap="again" hover-class="pressed" hover-start-time="0">重新来过</view>
   </block>
 
   <!-- ══ 做好了 ══════════════════════════════════════════ -->
@@ -72,7 +79,7 @@
         <view class="hand {{scrubbing ? 'nolerp' : ''}}"
               style="transform: rotate({{angle}}deg)"><view class="needle"></view></view>
       </view>
-      <view class="cue">{{loading ? '载 入 中' : (playing ? '暂 停' : '播 放')}}</view>
+      <view class="cue">{{loading ? '载入中' : (playing ? '暂停' : '播放')}}</view>
       <view class="err" wx:if="{{audioErr}}">{{audioErr}}</view>
     </view>
 
@@ -88,7 +95,16 @@
     </scroll-view>
     <view wx:else class="lyrics">{{lyrics}}</view>
 
-    <view class="btn btn-ghost" bindtap="again" hover-class="pressed" hover-start-time="0">我 也 要 做 一 首</view>
+    <!-- 灵感来自哪首歌。摆在歌词后面当版权页注记 ——
+         那首歌多半是两个人都听过的，点出来是在说「你懂的那首」。 -->
+    <view class="inspired" wx:if="{{inspired}}">{{inspired}}</view>
+
+    <!-- 送给 ta。必须是 <button open-type="share">，view 调不起微信的好友选择器。
+         button 自带边框和默认内边距，song.wxss 里把它们剥掉，
+         剥完长得跟全册其它按钮一模一样。 -->
+    <button class="btn share" open-type="share" hover-class="pressed" hover-start-time="0">送给{{toName || 'ta'}}</button>
+
+    <view class="btn btn-ghost" bindtap="again" hover-class="pressed" hover-start-time="0">我也要做一首</view>
   </block>
 
 </view>

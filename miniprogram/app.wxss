@@ -95,6 +95,13 @@ page {
 .t-birthday { --brass: #786292; --brass-soft: #EBE6F1; }   /* 暗紫 */
 .t-apology  { --brass: #5D6D80; --brass-soft: #E6EAEE; }   /* 青灰 */
 .t-thanks   { --brass: #8A7A4E; --brass-soft: #EFEBDB; }   /* 橄榄金 */
+.t-kid      { --brass: #B0705F; --brass-soft: #F5E7E2; }   /* 陶土 */
+.t-farewell { --brass: #8E7259; --brass-soft: #F0EAE2; }   /* 暮褐 */
+.t-missing  { --brass: #77757F; --brass-soft: #ECEAEE; }   /* 月灰 —— 十副里最淡的一个，这一副该最安静 */
+.t-anniv    { --brass: #5E7D72; --brass-soft: #E4EBE7; }   /* 铜绿 —— 铜放久了才生这层色，正好是纪念日 */
+.t-days     { --brass: #6E7C96; --brass-soft: #E7E9EF; }   /* 旧蓝 —— 褪了色的那种，回望的调子 */
+.t-breakup  { --brass: #8A7580; --brass-soft: #EDE8EB; }   /* 灰藕 —— 褪过一道的红，不是伤口是疤 */
+.t-cheer    { --brass: #5B7A4E; --brass-soft: #E6EBE2; }   /* 松绿 —— 撑住的颜色，不是喜庆的绿 */
 
 /* 同样五个场合在夜里的版本：色相不变，明度提上来。 */
 .night.t-wedding  { --brass: #C4767E; --brass-soft: #2A1C1E; }
@@ -104,6 +111,13 @@ page {
 .night.t-birthday { --brass: #9A82B8; --brass-soft: #201B29; }
 .night.t-apology  { --brass: #7C90A6; --brass-soft: #1A1F26; }
 .night.t-thanks   { --brass: #B0A06A; --brass-soft: #201E14; }
+.night.t-kid      { --brass: #D08D7A; --brass-soft: #2B1E1A; }
+.night.t-farewell { --brass: #B4967A; --brass-soft: #241E17; }
+.night.t-missing  { --brass: #9C99A8; --brass-soft: #1E1D22; }
+.night.t-anniv    { --brass: #7FA294; --brass-soft: #1A201D; }
+.night.t-days     { --brass: #93A0BC; --brass-soft: #1B1D24; }
+.night.t-breakup  { --brass: #AE9AA4; --brass-soft: #221D20; }
+.night.t-cheer    { --brass: #85A377; --brass-soft: #1A1F17; }
 
 .page {
   min-height: 100vh;
@@ -154,7 +168,16 @@ page {
 .rule { height: 1rpx; background: var(--rule); }
 
 /* 主按钮：直角。圆角是 App 的语言，铅字排出来的东西没有圆角。
-   字距拉开到能读出仪式感，text-indent 补掉末字后面多出来的那一格。 */
+   字距拉开到能读出仪式感，text-indent 补掉末字后面多出来的那一格。
+
+   字距**只由这里管**，按钮文案里不要再手打空格。
+   原来两套叠着用：文案写成「参 考 这 首 歌 的 曲 风」，这里又加 14rpx，
+   于是字缝 ≈ 空格宽 + 14rpx ≈ 29rpx，而字本身才 30rpx —— 缝跟字一样宽，
+   三四个字还撑得住，七八个字就散成一地。
+   而且手打空格对动态文案根本用不上：「送给{{toName}}」里的名字加不了空格，
+   渲染出来是前松后紧。一套机制才可控。
+
+   10rpx ≈ 0.33 em：短标题仍有仪式感，九个字的长标题也还抱得住。 */
 .btn {
   margin-top: 72rpx;
   height: 104rpx;
@@ -164,8 +187,8 @@ page {
   color: var(--paper);
   font-family: var(--serif);
   font-size: 30rpx;
-  letter-spacing: 14rpx;
-  text-indent: 14rpx;
+  letter-spacing: 10rpx;
+  text-indent: 10rpx;
 }
 .btn[disabled] { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1rpx var(--rule); }
 .btn-ghost {

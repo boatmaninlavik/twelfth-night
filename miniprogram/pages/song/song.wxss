@@ -209,8 +209,46 @@
   letter-spacing: 1rpx;
   color: var(--ink);
 }
+/* 灵感来自哪首歌。版权页注记的分量：小、淡、居中，说完就退场。 */
+.inspired {
+  margin-top: 40rpx;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 24rpx;
+  letter-spacing: 1rpx;
+  color: var(--muted);
+}
+
+/* 转发键。<button> 自带一圈边框、一个 min-height 和居中的行高，
+   全剥掉才能跟全册其它按钮（那些是 view.btn）长得一样。
+   ::after 那一条是关键 —— 微信的默认边框画在伪元素上，
+   只设 border:none 是去不掉的。 */
+button.btn.share {
+  margin-top: 36rpx;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 30rpx;
+  font-weight: normal;
+}
+button.btn.share::after { border: none; }
+
+/* 主题句。比上面那句小一档、淡一档 —— 它是注脚不是标题，
+   压过小丑那句就喧宾夺主了。 */
+.clown-sub {
+  margin-top: 18rpx;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 27rpx;
+  line-height: 1.7;
+  letter-spacing: 1rpx;
+  color: var(--ink-soft);
+}
+
 .epigraph-en {
-  margin-top: 16rpx;
+  margin-top: 20rpx;
   text-align: center;
   font-family: var(--serif-en);
   font-style: italic;              /* 原文用斜体，引文的老规矩，不用再加引号 */

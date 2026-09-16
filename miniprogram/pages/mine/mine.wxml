@@ -12,7 +12,7 @@
     <image class="cover" src="{{face}}" mode="aspectFit" />
     <view class="head-txt">
       <view class="eyebrow-plain">歌单</view>
-      <view class="head-name">我 的</view>
+      <view class="head-name">我的</view>
       <view class="head-meta">{{songs.length}} 首{{doneCount ? ' · ' + doneCount + ' 首已完成' : ''}}</view>
     </view>
   </view>
@@ -39,8 +39,8 @@
   <!-- 正常进不来：扉页上只有做过歌的人才看得到「我的」。
        清过缓存、换过设备的人会掉到这里，所以还是要有一条出路。 -->
   <view wx:if="{{!songs.length}}" class="blank">
-    <view class="muted">这台设备上还没有歌。</view>
+    <view class="muted">这台设备上还没有歌</view>
   </view>
 
-  <view class="btn btn-ghost" bindtap="make" hover-class="pressed" hover-start-time="0" hover-stay-time="90">再 做 一 首</view>
+  <view class="btn btn-ghost" bindtap="make" hover-class="pressed" hover-start-time="0" hover-stay-time="90">再做一首</view>
 </view>

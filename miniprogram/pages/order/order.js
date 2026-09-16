@@ -17,9 +17,36 @@ const nav = require('../../utils/nav.js');
  * 「可选」不靠"你可以不选"来表达，靠"默认就是不指定"来表达 ——
  * 取消是一个正向动作，用户不用猜"再点一下能不能取消"。
  */
+/** 默认露出来的四个。 */
+const COMMON = ['给亲人', '生日', '告白', '婚礼'];
+
+/**
+ * 全部十二个。次序：先关系，再时机，最后是**没有收信人**的那三个。
+ *
+ * 最后那一组是另一回事：想念、一段日子、倾诉都不是"送给谁"，
+ * 而是写给自己的。放在一起收尾，人扫到那儿就知道换类别了。
+ */
+const ALL = [
+  '婚礼', '告白', '给亲人', '给孩子',              // 关系：送给某个人
+  '生日', '纪念日', '感恩', '道歉', '鼓舞',        // 时机：为某件事
+  '送别', '分手', '想念',                          // 离别与失去
+  '一段日子', '倾诉',                              // 写给自己
+];
+
 Page({
   data: {
-    occasions: ['婚礼', '告白', '给亲人', '倾诉', '生日', '道歉', '感恩'],
+    /* 十个情景一次全铺出来是**选择过载**，而且这一栏本来就是可选的 ——
+       用一个十一格的大网格去呈现一件可以不答的事，等于把它办成了必答题。
+
+       所以默认只露四个最常用的，其余收进「更多」。
+       露哪四个是按送歌的实际频次拍的：生日最高，其次是给亲人（父母、爱人），
+       告白和婚礼频次低一些但情绪最重、也最愿意为它花钱。
+       这四个大概能盖住多数人；盖不住的那些点一下「更多」就全在。
+
+       排序仍然是先关系、后时机，同类挨着才扫得快 ——
+       人扫这一排是在找"哪个像我"，别按字数或者拼音排。 */
+    occasions: [],           // 实际显示的，由 onLoad / toggleMore 填
+    moreOpen: false,
     occasion: '', theme: '', mode: '',
     results: [], searching: false, refSong: null,
   },
@@ -28,14 +55,26 @@ Page({
     nav.apply(this);
     // 从下一页退回来时把选过的填回去，别让人重选一遍。
     const d = app.globalData.draft || {};
-    if (d.occasion || d.refSong) {
-      this.setData({ occasion: d.occasion || '', theme: theme.slug(d.occasion || ''),
-                     refSong: d.refSong || null });
+    const oc = d.occasion || '';
+    if (oc || d.refSong) {
+      this.setData({ occasion: oc, theme: theme.slug(oc), refSong: d.refSong || null });
     }
     this._toName = d.toName || '';
+
+    // 退回来时选中的那个如果藏在「更多」里，就直接展开 ——
+    // 不展开的话他会看见自己选过的东西凭空消失，以为选丢了。
+    this.setData({
+      moreOpen: !!oc && COMMON.indexOf(oc) < 0,
+      occasions: (!!oc && COMMON.indexOf(oc) < 0) ? ALL : COMMON,
+    });
   },
 
   onShow() { mode.sync(this); },
+
+  toggleMore() {
+    const open = !this.data.moreOpen;
+    this.setData({ moreOpen: open, occasions: open ? ALL : COMMON });
+  },
 
   onToName(e) { this._toName = e.detail.value; },   // 打字过程中不 setData
 
@@ -84,8 +123,17 @@ Page({
       toName: (this._toName || '').trim(),
       refSong: this.data.refSong,
     };
+    /* ⚠️ 对比期间：正常流程走 2b 圆签（pages/storyb）。
+       2c 一条线（pages/story）没删，从开发者工具的编译模式还能进。
+
+       为什么要改这一行：场合是在定歌页选的，只有从这儿跳过去，
+       故事页才拿得到它、六个圆签才会显示本场合的叫法。
+       之前靠编译模式直接启动 storyb，跳过了定歌页，场合永远是空的，
+       看到的就永远是通用那六个。
+
+       比完之后把这一行改回 '/pages/story/story' 就切回 2c。 */
     wx.navigateTo({
-      url: '/pages/story/story',
+      url: '/pages/storyb/storyb',
       // 必须有 fail：navigateTo 失败时什么都不会发生，界面上完全看不出来，
       // 表现就是"按钮点不动"。
       fail: (e) => {

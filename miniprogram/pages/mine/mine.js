@@ -131,8 +131,22 @@ Page({
     wx.navigateTo({ url: `/pages/song/song?id=${id}&occasion=${encodeURIComponent(occasion || '')}` });
   },
 
+  /**
+   * 再写一首。
+   *
+   * 原来这里直接跳 story —— 那是错的，它跳过的不只是扉页，**连定歌页也跳了**。
+   * 后果不是"少看一页"，是这一单**没有场合、没有收信人、没有参考歌**：
+   *   · cues.js 拿不到场合，只能发通用那副牌（八副里最弱的一副）；
+   *   · 三问里的 {name} 占位符落成默认值，问的不再是"妈妈是个什么样的人"；
+   *   · theme.slug('') 为空，整页的场合配色退回默认。
+   * 用户看到的是一套明显变笨了的引导，却不知道是自己少走了一页。
+   *
+   * 草稿也要就地清掉：上一首的残留会让新歌串味 —— story.js 的 onLoad 见到
+   * d.story 有值就直接把人放到合稿页，那时他会看见上一首的故事。
+   */
   make() {
-    wx.navigateTo({ url: '/pages/story/story' });
+    getApp().globalData.draft = { occasion: '', story: '', toName: '', refSong: null, tune: null };
+    wx.navigateTo({ url: '/pages/order/order' });
   },
 
   back() {

@@ -1,0 +1,86 @@
+<!-- 定调：这首歌听起来是什么样。
+     两种答法回答同一个问题 —— 挑一首歌，或者挑一句话。
+     哪种顺手用哪种，和故事页「提词卡 / 我自己写」是同一个结构。
+     **点中即出页**，所以这一页没有「下一步」按钮：多一个按钮就是多一次确认，
+     而这里没有什么要确认的。 -->
+<view class="page {{mode}} t-{{theme}}" style="padding-top:{{padTop}}rpx">
+
+  <!-- 返回。top 跟右上角胶囊对齐（utils/nav.js）。
+       原来这儿写的是 class="nav" + .nav-arrow —— 那两个类**全项目都没定义**，
+       所以箭头根本没画出来，这一页等于没有返回键。
+       全册的返回键都是 .back + .chev，照抄。 -->
+  <view class="back" style="top:{{navTop}}rpx;height:{{navSize}}rpx"
+        bindtap="back" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
+    <view class="chev"></view>
+  </view>
+
+  <view class="eyebrow">调子</view>
+
+  <view class="h1">听起来是什么样</view>
+  <view class="sub">不用懂音乐，挑一首你喜欢的歌，或者挑一句话</view>
+
+  <!-- 上一页已经选过参考歌的，直接摆在最上面，别让人再找一遍。 -->
+  <view class="picked" wx:if="{{refSong}}">
+    <view class="picked-k">已选</view>
+    <view class="picked-song">《{{refSong.name}}》</view>
+    <view class="picked-artist">{{refSong.artist}}</view>
+    <!-- 措辞改过两轮，都是同一个方向：**别承诺后台做不到的事**。
+         「就按这首的调子」最糟，等于保证像；「参考这首歌的曲风」好一点，
+         但「曲风」仍然是一项具体承诺 —— 出来的歌曲风不像，照样是打脸。
+         「灵感来自」什么都不保证：灵感本来就只是个起点。
+         这也跟定歌页那一栏的说法对上了。 -->
+    <view class="btn" bindtap="keepRef" hover-class="pressed" hover-start-time="0" hover-stay-time="90">灵感来自这首歌</view>
+    <view class="link" bindtap="clearRef" hover-class="pressed" hover-start-time="0" hover-stay-time="90">换一个</view>
+  </view>
+
+  <block wx:else>
+
+    <!-- ══ 答法一：挑一首歌 ═══════════════════════════
+         只给搜索，不给目录。
+         目录这东西看着贴心，实际上是我替用户挑的几首歌 —— 挑得再好也是我的口味，
+         而且六首里没有他那首的时候，那六首就成了噪音，还可能把人锚到并不真喜欢的歌上。
+         真正需要"认得出而不是想得起来"的那些人，右边那五张声音卡已经接住了。 -->
+    <view class="sec-h">
+      <view class="sec-t">挑一首歌</view>
+    </view>
+
+    <!-- 用全局的 .panel，跟定歌页那两个输入框完全一致。
+         别自己另写一套：.panel 里已经解决了「<input> 加纵向 padding 会把字挤没」
+         那个坑，重写一遍就是重新踩一遍。 -->
+    <input class="panel" placeholder="歌名，或者歌手" placeholder-class="ph"
+           value="{{q}}" bindinput="onQuery" confirm-type="search" />
+
+    <view class="hint" wx:if="{{searching}}">找着…</view>
+
+    <view class="list" wx:if="{{results.length}}">
+      <view class="song" wx:for="{{results}}" wx:key="id"
+            data-song="{{item}}" bindtap="pickSong" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
+        <view class="song-n">{{item.name}}</view>
+        <view class="song-a">{{item.artist}}</view>
+      </view>
+    </view>
+
+    <!-- 搜不到时给一句话。留白是最省事的做法，但用户分不清"没找到"和"还没搜"，
+         会以为是程序卡住了，然后一直等。 -->
+    <view class="hint" wx:if="{{!searching && q && !results.length}}">没找到这一首，换个歌名或者歌手名试试</view>
+
+    <!-- ══ 答法二：挑一句话 ═══════════════════════════ -->
+    <view class="sec-h sec-gap">
+      <view class="sec-t">或者挑一句话</view>
+    </view>
+
+    <view class="list">
+      <view class="card" wx:for="{{tunes}}" wx:key="k"
+            data-k="{{item.k}}" bindtap="pickTune" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
+        <view class="card-t">{{item.t}}</view>
+        <view class="card-eg">{{item.eg}}</view>
+      </view>
+    </view>
+
+    <view class="link" bindtap="free" hover-class="pressed" hover-start-time="0" hover-stay-time="90">不指定，让它自己长</view>
+
+  </block>
+
+  <view class="foot">参考歌只用来指导方向，歌名和歌手名都不会进到音乐模型的描述里</view>
+
+</view>

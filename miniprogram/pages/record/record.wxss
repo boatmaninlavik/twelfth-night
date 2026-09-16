@@ -1,9 +1,13 @@
+/* 两行：上行一行，下行一行。
+   字号从 46rpx 收到 40rpx —— 两行 46rpx 会把这一页压得头重脚轻，
+   而且 24 个字符在 46rpx 下已经顶到版心边上了，换行会断在奇怪的地方。 */
 .scale {
-  margin-top: 56rpx;
+  white-space: pre-line;        /* 认 wxml 里那个 \n，两行是一个排印整体 */
+  margin-top: 52rpx;
   font-family: var(--serif-en);
   font-style: italic;
-  font-size: 46rpx;
-  line-height: 1.5;
+  font-size: 40rpx;
+  line-height: 1.65;
   letter-spacing: 4rpx;
   color: var(--ink);
 }
@@ -15,8 +19,34 @@
   color: var(--muted);
 }
 
+/* 返回键。跟 order / story / tune / song / mine 完全一致。 */
+.back {
+  position: absolute;
+  left: 40rpx;
+  width: 64rpx;
+  display: flex; align-items: center; justify-content: center;
+}
+.chev {
+  width: 22rpx; height: 22rpx;
+  border-left: 1rpx solid var(--ink);
+  border-bottom: 1rpx solid var(--ink);
+  transform: rotate(45deg);
+  margin-left: 8rpx;
+}
+
+/* 安静环境。录音质量的成败多半在这一句上，但它不该喊 ——
+   压在音阶下面当小注，人在按录音键之前正好读到。 */
+.quiet {
+  margin-top: 18rpx;
+  font-size: 23rpx;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
 .mic-wrap {
-  margin-top: 110rpx;
+  /* 音阶多占了一行，这里让回来 —— 录音键必须留在拇指够得着的地方，
+     它下面还有「点一下开始」和授权那一行。 */
+  margin-top: 52rpx;
   display: flex; flex-direction: column; align-items: center; gap: 34rpx;
 }
 
@@ -44,6 +74,32 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 档案卡。两行小字，一根界栏分行 —— 跟「我的」那份曲目单同一个骨架，
+   不做成一张卡片：这一册书里没有卡片。 */
+.keep {
+  margin-top: 56rpx;
+  border-top: 1rpx solid var(--rule);
+}
+.keep-row {
+  display: flex;
+  align-items: baseline;
+  padding: 26rpx 0;
+  border-bottom: 1rpx solid var(--rule);
+}
+.keep-k {
+  flex: none;
+  width: 150rpx;
+  font-family: var(--serif);
+  font-size: 23rpx;
+  letter-spacing: 8rpx;
+  color: var(--muted);
+}
+.keep-v {
+  font-family: var(--serif);
+  font-size: 30rpx;
+  color: var(--ink);
+}
+
 /* 版权页注记的位置：沉到最底下，字最小，说完就退场。 */
 .notice {
   margin-top: 96rpx;
@@ -54,3 +110,180 @@
   letter-spacing: 1rpx;
   color: var(--muted);
 }
+/* 授权说明的常驻入口。撤回这条路必须一直找得到 ——
+   「随时可以撤回」写在条款里而界面上没有入口，那句话就是假的。 */
+.notice-link {
+  margin-left: 12rpx;
+  color: var(--brass);
+  border-bottom: 1rpx solid var(--brass);
+  padding-bottom: 2rpx;
+}
+
+
+/* ── 授权书 ──────────────────────────────────────────
+   一张纸从底下推上来。**直角** —— 圆角在这套语言里只给"要填的东西"，
+   这是一份要读的文件，不是一个输入框。上沿压一根界栏，跟全册同一根线。 */
+.sheet-mask {
+  position: fixed;
+  left: 0; right: 0; top: 0; bottom: 0;
+  z-index: 100;
+  background: rgba(12, 11, 16, .5);
+  display: flex;
+  align-items: flex-end;
+}
+
+.sheet {
+  width: 100%;
+  /* 定高，不是 max-height。这是一份要读完的文件，读区越大越好；
+     而且定了高，下面的 sheet-body 才有确定的剩余空间可分。 */
+  height: 88vh;
+  box-sizing: border-box;
+  background: var(--paper);
+  /* color 必须在这里再声明一次。变量是继承的，但"已经算好的色值"不是 ——
+      这跟 app.wxss 里 .page 要重新取一次 var(--ink) 是同一件事。 */
+  color: var(--ink);
+  border-top: 1rpx solid var(--rule);
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet-head {
+  flex: none;
+  padding: 44rpx 56rpx 0;
+}
+/* 全局 .eyebrow 那 26rpx 内衬 + 56rpx 下留白是给整页排的，
+   在这张纸的头上太松 —— 头越高，能读条款的地方越少。 */
+.sheet-head .eyebrow { padding-bottom: 16rpx; margin-bottom: 20rpx; }
+.sheet-title {
+  white-space: pre-line;          /* 标题里的手动断行（consent.js 的 {br}） */
+  margin-top: 4rpx;
+  font-family: var(--serif);
+  font-size: 44rpx;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 2rpx;
+}
+
+/* scroll-view 必须拿到一个**确定**的高度，否则它没有内在高度、会塌成 0。
+   原来写的是 height:50vh —— 那是错的：头尾两块是固定 rpx，body 是 vh，
+   三者相加不是一个固定比例，屏幕一矮（iPhone SE）总高就顶穿 .sheet，
+   条款被齐齐切掉一截，而用户完全看不出来自己没读到全文。
+   flex-basis 必须是 0 不能是 auto：auto 拿内容高当基准，条款有多长它就有多长，
+   照样撑破。0 才表示"把剩下的地方都给我"。 */
+.sheet-body {
+  flex: 1 1 0%;
+  min-height: 160rpx;           /* flex 万一没生效时的兜底，不至于塌没 */
+  margin-top: 32rpx;
+}
+
+/* 横向内衬只能挂在这一层。
+   放在上面那个 scroll-view 上时，微信算内容宽度会忽略这两个 padding、
+   却又按左内衬把整块内容右移 —— 右边被齐齐切掉 56rpx，看着还像没居中。
+   这里 box-sizing 必须显式写：app.wxss 没有全局 reset，
+   默认的 content-box 会让 width:100% + padding 又撑出 112rpx。 */
+.sheet-inner {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0 56rpx;
+}
+
+.sheet-lede {
+  white-space: pre-line;
+  font-size: 26rpx;
+  line-height: 1.9;
+  color: var(--ink-soft);
+  padding-bottom: 32rpx;
+  border-bottom: 1rpx solid var(--rule);
+}
+
+.sec { margin-top: 36rpx; }
+.sec-h {
+  font-family: var(--serif);
+  font-size: 28rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+  color: var(--ink);
+}
+.sec-p {
+  white-space: pre-line;          /* 条款里的换行是分条，不能被折掉 */
+  margin-top: 14rpx;
+  font-size: 25rpx;
+  line-height: 1.95;
+  color: var(--ink-soft);
+}
+
+/* 读到这儿就是读完了。也是"滚动到底"那条存证的视觉终点。 */
+.sheet-end {
+  margin: 48rpx 0 8rpx;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 22rpx;
+  letter-spacing: 8rpx;
+  text-indent: 8rpx;
+  color: var(--muted);
+}
+
+.sheet-foot {
+  flex: none;
+  padding: 32rpx 56rpx 56rpx;
+  border-top: 1rpx solid var(--rule);
+}
+
+/* 年龄分档。用全局的 .pills（定歌页选场合那一套）—— 同一类交互，
+   同一个长相，不另起一套。 */
+.ages-label {
+  font-family: var(--serif);
+  font-size: 22rpx;
+  letter-spacing: 8rpx;
+  text-indent: 8rpx;
+  color: var(--muted);
+}
+.ages .pills { margin-top: 16rpx; }
+.ages-hint {
+  margin-top: 18rpx;
+  font-size: 23rpx;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+/* 勾选框。直角、一根细边，勾上才上那点金 —— 跟场合标签是同一套做法。
+   **默认一个都不勾**，而且年龄用选择、授权用勾选，两件事分开摆。 */
+.check {
+  display: flex;
+  align-items: flex-start;
+  padding: 14rpx 0;
+}
+.box {
+  flex: none;
+  width: 32rpx; height: 32rpx;
+  margin: 6rpx 20rpx 0 0;
+  box-shadow: inset 0 0 0 1rpx var(--muted);
+  display: flex; align-items: center; justify-content: center;
+}
+.box.on { box-shadow: inset 0 0 0 1rpx var(--brass); }
+/* 勾是一个转 45 度的 L，不是打钩的图标 —— 这一册里一个图标都没有。 */
+.tick {
+  width: 8rpx; height: 15rpx;
+  border-right: 2rpx solid transparent;
+  border-bottom: 2rpx solid transparent;
+  transform: rotate(45deg) translate(-1rpx, -1rpx);
+}
+.box.on .tick { border-color: var(--brass); }
+
+.check-t {
+  flex: 1;
+  font-size: 24rpx;
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+
+/* 没勾满时按钮是虚的。不用 disabled 属性 —— 这是 view 不是 button，
+   而且点下去要能给一句提示（"还有一条没勾"），死按钮什么都不说。 */
+.sheet-foot .btn { margin-top: 32rpx; }
+.sheet-foot .btn.off {
+  background: transparent;
+  color: var(--muted);
+  box-shadow: inset 0 0 0 1rpx var(--rule);
+}
+.sheet-foot .link { margin-top: 28rpx; }
+.sheet-foot .link.revoke { margin-top: 20rpx; color: var(--sel); }

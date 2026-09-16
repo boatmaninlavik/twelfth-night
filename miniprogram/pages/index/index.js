@@ -23,12 +23,22 @@ Page({
    * 他再打开的时候要找的就是那首歌，让他从扉页自己点进去是把这一下办砸了。
    *
    * 放 onLoad 不放 onShow：onShow 每次从作品页返回都会再触发一次，
-   * 那样他就被锁在那一页里出不来了。onLoad 一个页面实例只跑一次，
-   * 而扉页是入口页、整个会话里只 load 这一次 —— 正好等于"每次启动送一回"。
+   * 那样他就被锁在那一页里出不来了。
+   *
+   * 但光靠 onLoad 不够 —— 原来那句注释里"扉页整个会话只 load 一次"是**错的**：
+   * 作品页的返回会 reLaunch 回扉页，那会重建页面实例、onLoad 再跑一遍，
+   * 于是人又被送回作品页。两页互相弹，扉页永远够不着。
+   * 所以另记一个会话级的标记：**送过一回就不再送**。
+   * 用户主动退出来，就是明确表示他现在不想看那一页 —— 得认这个意思。
    */
   onLoad() {
+    const app = getApp();
+    if (app.globalData.resumed) return;
+
     const p = library.pending();
     if (!p) return;
+
+    app.globalData.resumed = true;
     wx.navigateTo({
       url: `/pages/song/song?id=${p.id}&occasion=${encodeURIComponent(p.occasion || '')}`,
       // 失败什么都不做，人就留在扉页 —— 他还能自己从「我的」点进去。

@@ -10,10 +10,17 @@ const SLUG = {
   婚礼: 'wedding',
   告白: 'confess',
   给亲人: 'family',
-  倾诉: 'vent',
+  给孩子: 'kid',
   生日: 'birthday',
-  道歉: 'apology',
   感恩: 'thanks',
+  道歉: 'apology',
+  送别: 'farewell',
+  想念: 'missing',
+  纪念日: 'anniv',
+  分手: 'breakup',
+  鼓舞: 'cheer',
+  一段日子: 'days',
+  倾诉: 'vent',
 };
 
 module.exports = { slug: (occasion) => SLUG[occasion] || '' };

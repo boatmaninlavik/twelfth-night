@@ -1,0 +1,144 @@
+<!-- 故事页 · 2b 圆签。和 pages/story（2c 一条线）并行的另一版，只为对比。
+     开发者工具「编译模式」选「2b 圆签」进这一页。 -->
+<view class="page story t-{{theme}} {{mode}}" style="padding-top:{{padTop}}rpx">
+
+  <view class="back" style="top:{{navTop}}rpx;height:{{navSize}}rpx"
+        bindtap="back" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
+    <view class="chev"></view>
+  </view>
+
+  <view class="eyebrow">{{eyebrow}}</view>
+
+
+  <!-- ══ 六个圆签 ═══════════════════════════════════════
+       整屏只有六个词。扫六个词比扫六行句子快得多 —— 这是这一版的全部主张。
+
+       **真的画成圆**，不是胶囊：圆签之间留得出空，六个排两列也不拥挤；
+       胶囊宽度随字数变，六个长短不一排出来又是一排参差。
+       圆是等宽的，这一点恰恰是它比胶囊好的地方。 -->
+  <block wx:if="{{step === 'tags'}}">
+
+    <!-- 「挑一个」不是「挑三个」。
+         三个答案确实比一个好（画面 / 那件事 / 那句话 正好是歌的骨架），
+         但**把三写在标题上就成了配额** —— 人还没动手就欠了三笔。
+         配额只会逼出两种结果：随便凑满，或者干脆不点。
+         而这一页要的恰恰是他愿意多想一会儿才想得起来的东西。
+         门槛降到一个，剩下两个靠答完之后那句邀请去要。 -->
+    <view class="h1">挑一个说</view>
+    <view class="sub">点一个，我再细问</view>
+
+    <view class="dots">
+      <view class="dot {{item.done ? 'done' : ''}}"
+            wx:for="{{tags}}" wx:key="k" data-k="{{item.k}}"
+            bindtap="tapTag" hover-class="pressed" hover-start-time="0" hover-stay-time="90">{{item.label}}</view>
+    </view>
+
+    <!-- **没有分母。** 「1 / 3」那个分母是压力的真正来源：
+         它把一件自愿的事变成一笔没还完的债。
+         一个都没答时这里什么也不说；答过之后给的是**理由**不是指标 ——
+         人为了"让歌更像 ta"会继续，为了填满进度条不会。 -->
+    <view class="count">
+      <text wx:if="{{countHint}}">{{countHint}}</text>
+      <text class="count-link" catchtap="toFree">{{countHint ? ' · ' : ''}}都不合适，我自己写</text>
+    </view>
+
+    <view class="btn {{answered ? '' : 'off'}}" bindtap="toDone"
+          hover-class="pressed" hover-start-time="0" hover-stay-time="90">下一步</view>
+  </block>
+
+
+  <!-- ══ 答一个 ═════════════════════════════════════════
+       签缩成一个小圆留在题目左边 —— 人一眼知道自己在答哪一个，
+       不必靠记忆把上一屏的选择接上。 -->
+  <block wx:elif="{{step === 'ask'}}">
+    <view class="ask-head">
+      <view class="dot sm done">{{cur.label}}</view>
+      <view class="ask-q">{{title}}</view>
+    </view>
+
+    <textarea wx:if="{{writing}}" class="sheetbox" focus
+              value="{{answer}}" cursor="{{answer.length}}"
+              placeholder="{{ph}}" placeholder-class="ph"
+              bindinput="onInput" bindblur="stopWriting"
+              maxlength="600" auto-height="{{false}}" />
+    <view wx:else class="sheetbox {{answer ? '' : 'is-ph'}}"
+          bindtap="startWriting">{{answer || ph}}</view>
+
+    <!-- 示例答落在框**下面**，不当占位符：占位符一打字就没了，
+         而这一句正是打字打到一半最想再看一眼的东西。 -->
+    <view class="eg-line" wx:if="{{eg}}">别人写过：{{eg}}</view>
+
+    <view class="tools">
+      <view class="tool" bindtap="swapQ" hover-class="pressed" hover-start-time="0" hover-stay-time="90">换个问法</view>
+    </view>
+
+    <view class="marks" wx:if="{{hits.length}}">
+      <view class="marks-label">记下了</view>
+      <view class="marks-list">
+        <text wx:for="{{hits}}" wx:key="*this">{{index > 0 ? ' · ' : ''}}{{item}}</text>
+      </view>
+    </view>
+
+    <!-- 其余没答的签留在底下，可以直接跳过去 —— 省掉一次"返回再点"。
+         这是这一版比一条线顺的地方。 -->
+    <view class="rest">
+      <view class="dot xs {{item.done ? 'done' : ''}}"
+            wx:for="{{rest}}" wx:key="k" data-k="{{item.k}}"
+            bindtap="tapTag" hover-class="pressed" hover-start-time="0" hover-stay-time="90">{{item.short}}</view>
+    </view>
+    <view class="rest-link" bindtap="nextUndone" hover-class="pressed" hover-start-time="0" hover-stay-time="90">接着答下一个</view>
+
+    <view class="btn" bindtap="saveAsk" hover-class="pressed" hover-start-time="0" hover-stay-time="90">存下这句</view>
+  </block>
+
+
+  <!-- ══ 合稿 ═══════════════════════════════════════════
+       原来这里是把所有答案拼成一整段，摆在一个大框里。
+       问题是**问题被剥掉了**：屏幕上只剩「长发飘扬」四个字，
+       用户过两分钟自己都想不起来这是在答什么，
+       而写歌的模型拿到的更是一个没有上下文的碎片。
+
+       现在问答成对摆，逐条可改。问题用小字压在答案上面 ——
+       它是**标签不是内容**，所以比答案小、比答案淡。 -->
+  <block wx:else>
+    <view class="h1">这就是你说的</view>
+    <view class="sub">每一条都能改{{'\n'}}想到别的，也可以接着往下写</view>
+
+    <view class="qa">
+      <view class="qa-row" wx:for="{{rows}}" wx:key="k">
+        <view class="qa-k">{{item.label}}</view>
+        <view class="qa-q">{{item.q}}</view>
+
+        <textarea wx:if="{{editing === item.k}}" class="qa-a edit" focus
+                  value="{{item.a}}" cursor="{{item.a.length}}"
+                  bindinput="onInput" bindblur="stopWriting"
+                  maxlength="400" auto-height />
+        <view wx:else class="qa-a" data-k="{{item.k}}" bindtap="editRow"
+              hover-class="pressed" hover-start-time="0" hover-stay-time="90">{{item.a}}</view>
+      </view>
+    </view>
+
+    <!-- 还没答的那几个，最后给一次机会。不强推，一行小字。 -->
+    <view class="qa-more" wx:if="{{undone}}" bindtap="toTags"
+          hover-class="pressed" hover-start-time="0" hover-stay-time="90">还有 {{undone}} 个没答 ›</view>
+
+    <!-- 自由补充。三问之外想到什么都能往这儿写 ——
+         没有这一块的话，用户只能在某一条答案后面硬接，接出来是串味的。 -->
+    <view class="qa-k free-k">还想说点别的</view>
+    <textarea wx:if="{{editing === 'extra'}}" class="panel tall" focus
+              value="{{extra}}" cursor="{{extra.length}}"
+              placeholder="时间、地点、一句原话，什么都行" placeholder-class="ph"
+              bindinput="onInput" bindblur="stopWriting"
+              maxlength="400" auto-height="{{false}}" />
+    <view wx:else class="panel tall {{extra ? '' : 'is-ph'}}" data-k="extra" bindtap="editRow"
+          hover-class="pressed" hover-start-time="0" hover-stay-time="90">{{extra || '时间、地点、一句原话，什么都行'}}</view>
+
+    <view class="tally" wx:if="{{tally >= 2}}">
+      <view class="tally-n">记下了 {{tally}} 个只有你知道的细节</view>
+      <view class="tally-note">再给一个，这首歌会更像 ta</view>
+    </view>
+
+    <view class="btn stack" bindtap="next" hover-class="pressed" hover-start-time="0" hover-stay-time="90">下一步</view>
+  </block>
+
+</view>

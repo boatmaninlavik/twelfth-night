@@ -3,6 +3,8 @@
     "pages/index/index",
     "pages/order/order",
     "pages/story/story",
+    "pages/storyb/storyb",
+    "pages/tune/tune",
     "pages/record/record",
     "pages/song/song",
     "pages/mine/mine"

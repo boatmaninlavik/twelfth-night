@@ -43,10 +43,15 @@ const RAYS = [
  * 而"夜幕降临"这四个字跟剧名本身是同一个意象。
  */
 const CLOWN_LINES = [
-  '小丑正拨响他的电吉他，{{BR}}编织属于你的主打歌',
-  '小丑正按下黑白琴键，{{BR}}将你的心事揉进旋律',
+  // 「你们的」不是「你的」：这首歌是写给两个人的 —— 说话的那个和被说的那个。
+  //
+  // 行末**不带标点**。全角逗号占一个整字宽、视觉上却大半是空白，
+  // 挂在居中行的末尾会把整行往左拽 —— 看着就是"没居中"。
+  // 居中的展示性文字不收行末标点，这是排印惯例，不是漏了。
+  '小丑在弹着电吉他{{BR}}创作属于你们的歌',
+  '小丑正按下黑白琴键{{BR}}将你的心事揉进旋律',
 ];
-const NIGHT_LINE = '夜幕降临，{{BR}}音乐正在升起';
+const NIGHT_LINE = '夜幕降临{{BR}}音乐正在升起';
 
 /**
  * 状态词的"闪词"。
@@ -114,12 +119,25 @@ const STEPS = {
   done:           { pct: 100, text: '好了' },
 };
 
+/**
+ * 「灵感来自 周杰伦《晴天》」。没选参考歌就返回空串，整行不出现。
+ *
+ * 这一句是**给收信人看的**，不是给下单的人看的 ——
+ * 灵感那首歌往往是两个人都听过的，点出来是在说"你懂的那首"。
+ * 所以它同时出现在成品页和分享卡的标题里。
+ */
+function inspiredBy(ref) {
+  if (!ref || !ref.name) return '';
+  return ref.artist ? `灵感来自 ${ref.artist}《${ref.name}》` : `灵感来自《${ref.name}》`;
+}
+
 Page({
   data: {
     occasion: '', theme: '', mode: '', rays: RAYS,
     ready: false,                      // false = 做歌中，true = 成品
     pct: 6, step: '正在读你的故事', failed: false, errMsg: '', clown: '', body: F.BODY, armL: F.ARM_L, armR: F.ARM_R, hat: F.HAT, petals: PETALS,
     title: '', byline: '', lyrics: '', playing: false,
+    toName: '', inspired: '',          // 收信人、「灵感来自 周杰伦《晴天》」
     loading: false, audioErr: '',
     synced: false, lines: [], active: -1, anchor: '',
     angle: 0, scrubbing: false,        // 指针角度（0 = 正北），以及是不是正被手指拖着
@@ -247,6 +265,8 @@ Page({
       pct: 100,
       title: o.title || '无题',
       byline: o.toName ? `致 ${o.toName}` : '',   // 唱片扉页的写法，不写"谁唱给谁"
+      toName: o.toName || '',
+      inspired: inspiredBy(o.refSong),
       lyrics: o.lyrics || '',
       ...this.buildLyrics(o.lyricLines),
     });
@@ -352,14 +372,28 @@ Page({
     if (dur > 0 && player) player.seek((this.data.angle / 360) * dur);
   },
 
-  /** 回「我的」。 */
+  /**
+   * 返回。
+   *
+   * 原来这里写死"一律跳「我的」"，于是出了个死循环：
+   * 扉页自动把人送到这一页 → 返回跳到「我的」→「我的」的返回是 navigateBack →
+   * 又回到这一页。两页互相弹，**扉页永远够不着**。
+   * 一单卡住做不完的时候（内测里天天发生），用户就被锁死在等待页上了。
+   *
+   * 现在按"下面那一页是谁"来定，这才是返回键本来的意思。
+   */
   back() {
     const stack = getCurrentPages();
     const prev = stack[stack.length - 2];
-    // 从「我的」点进来的就退回去，别在栈里再压一层同样的页；
-    // 从录音页 redirect 过来的（栈里没有「我的」）就正常跳。
-    if (prev && prev.route === 'pages/mine/mine') wx.navigateBack();
-    else wx.navigateTo({ url: '/pages/mine/mine' });
+    const route = prev && prev.route;
+
+    // 扉页送过来的、从「我的」点进来的 —— 退回去就是对的
+    if (route === 'pages/index/index' || route === 'pages/mine/mine') return wx.navigateBack();
+
+    // 剩下两种：刚提交完（栈下面是定调、录音那几页，退回去没有意义），
+    // 或者从分享卡直接打开（栈里就这一页，navigateBack 会静默失败）。
+    // 都回扉页，顺手把那条已经没意义的栈清掉。
+    wx.reLaunch({ url: '/pages/index/index' });
   },
 
   seek(e) {
@@ -383,4 +417,38 @@ Page({
   },
 
   again() { wx.reLaunch({ url: '/pages/index/index' }); },
+
+  /**
+   * 转发给微信好友。
+   *
+   * 这是整个产品里**唯一一条能把歌送到那个人手上的路**，之前一条都没有。
+   *
+   * 为什么不是"做好了自动推送给 ta"：小程序读不到通讯录，订阅消息也只能发给
+   * 当前用户本人 —— 给一个没授权过的人发消息，微信会直接拒。
+   * 转发是官方唯一的定向送达方式：用户点一下，微信弹好友选择器，他自己选发给谁。
+   * 我们拿不到"选了谁"，只拿到这个回调。
+   * 而这在体验上反而更对：是"我亲手发给你"，不是"系统替我发"。
+   *
+   * 卡片**只有标题和图两样**，没有副标题字段，所以「灵感来自…」只能并进标题。
+   * 标题两行封顶，太长会被截断，因此没有收信人或没有灵感歌时都各自省掉那一截。
+   */
+  onShareAppMessage() {
+    const { title, toName, inspired, ready } = this.data;
+
+    // 还没做完就别让人分享：对方点进来看到的是一个转着的小丑，
+    // 而且卡片截图截到的是等待页。
+    if (!ready) {
+      return { title: '十二夜 · 用你的声音，唱一首只给一个人的歌',
+               path: '/pages/index/index' };
+    }
+
+    const head = toName ? `${toName}，这首歌给你` : `送你一首歌`;
+    const name = title ? `《${title}》` : '';
+    return {
+      title: [head + name, inspired].filter(Boolean).join(' · '),
+      path: `/pages/song/song?id=${this._id}&occasion=${encodeURIComponent(this.data.occasion || '')}`,
+      // 不给 imageUrl：微信会自己截这一页的顶部，那儿正好是歌名和那颗星。
+      // 自己出图要再做一套 5:4 的封面，等真觉得截图不好看再补。
+    };
+  },
 });

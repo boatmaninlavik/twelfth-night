@@ -10,7 +10,8 @@ import express from 'express';
 import multer from 'multer';
 import { credits } from './kie.js';
 import { searchSongs } from './search.js';
-import { createOrder, getOrder, listOrders, updateOrder, putAudio } from './store.js';
+import { createOrder, getOrder, listOrders, updateOrder, putAudio, db, BUCKET,
+         getVoiceProfile, putVoiceProfile, dropVoiceProfile } from './store.js';
 import { runPipeline, runVoiceSwap } from './pipeline.js';
 import { openidFromCode } from './wx.js';
 
@@ -54,8 +55,11 @@ const wrap = (fn) => (req, res) => fn(req, res).catch((e) => {
  *
  * `song_url` (the Suno original) is left out on purpose, not merely unused: letting a
  * client see it makes it one line of code away from being played, and hearing the
- * original first tells the user their own voice was pasted on afterwards. The only
- * audio this API hands out is `result_url`.
+ * original first tells the user their own voice was pasted on afterwards.
+ *
+ * 唯一的例外是**用户拒绝了声音授权**的那些单：那种单没有换声这一步，原版就是
+ * 成品，不交付它就等于这一单永远做不完。授权弹窗里写着「你仍然可以下单，
+ * 我们会用歌手的音色把这首歌做完」—— 写了就得真做到。
  */
 const publicOrder = (o) => ({
   id: o.id,
@@ -66,10 +70,26 @@ const publicOrder = (o) => ({
   toName: o.to_name,
   fromName: o.from_name,
   occasion: o.occasion,
+  // 分享卡片上要写「灵感来自 周杰伦《晴天》」，所以这一项得交出去。
+  // 不是敏感信息：歌名和歌手名是公开事实，而且正是要给收信人看的那一句。
+  refSong: o.ref_song || null,
   createdAt: o.created_at,
-  resultUrl: o.result_url,
+  resultUrl: o.use_own_voice === false ? (o.result_url || o.song_url) : o.result_url,
+  usedOwnVoice: o.use_own_voice !== false,
   error: o.error,
 });
+
+/**
+ * 声音档案的公开形状。**绝不交出 voice_path** —— 那是 bucket 里那份录音的
+ * 位置，客户端拿到它就离"能下载别人的声音"只差一步。
+ * 客户端只需要知道"有没有、什么时候录的、还剩多久"。
+ */
+const publicVoice = (v) => (v ? {
+  createdAt: v.created_at,
+  expiresAt: v.expires_at,
+  durationSec: v.duration_sec,
+  audioMd5: v.audio_md5,
+} : null);
 
 app.get('/api/health', wrap(async (_req, res) => {
   res.json({ ok: true, credits: await credits().catch(() => null) });
@@ -116,14 +136,54 @@ app.get('/api/selftest', wrap(async (_req, res) => {
   });
 }));
 
+/* ── 声音档案 ──────────────────────────────────────────
+   录音挂在人身上不挂在单上。第二次下单的人不必重录、不必再走第一层授权，
+   但**每一单仍然要签授权书** —— 那份文件是按单留证的。 */
+
+/** 有没有一份还能用的档案。没有就返回 null，客户端据此决定是不是要录。 */
+app.get('/api/voice', wrap(async (req, res) => {
+  const openid = req.query.openid ? String(req.query.openid) : null;
+  const token = req.query.token ? String(req.query.token) : null;
+  if (!openid && !token) return res.json({ voice: null });
+  res.json({ voice: publicVoice(await getVoiceProfile({ openid, token })) });
+}));
+
+/**
+ * 撤回：删掉档案和它在 bucket 里的文件。
+ *
+ * 「随时可以撤回」写在授权书第三条里，这条路就必须真的能跑通 ——
+ * 监管检查和用户投诉时第一个被验证的就是它。
+ * 不动订单：授权书 3.4 说撤回不影响撤回前已完成的交付，做好的歌还是用户的。
+ */
+app.delete('/api/voice', wrap(async (req, res) => {
+  const openid = req.query.openid ? String(req.query.openid) : null;
+  const token = req.query.token ? String(req.query.token) : null;
+  if (!openid && !token) return res.status(400).json({ error: '缺 openid 或 token' });
+
+  const row = await getVoiceProfile({ openid, token });
+  if (!row) return res.json({ ok: true });      // 本来就没有，也算删成功
+  await dropVoiceProfile(row);
+  res.json({ ok: true });
+}));
+
 app.get('/api/search', wrap(async (req, res) => {
   res.json({ songs: await searchSongs(String(req.query.q || '')) });
 }));
 
 /** Create an order and start the pipeline. Returns immediately with an id to poll. */
 app.post('/api/orders', wrap(async (req, res) => {
-  const { story, occasion, toName, fromName, refSong, openid } = req.body || {};
+  const { story, occasion, toName, fromName, refSong, openid,
+          useOwnVoice, reuseVoice, deviceToken, consent, tune } = req.body || {};
   if (!story?.trim()) return res.status(400).json({ error: '请先讲讲这个人' });
+
+  // 用旧档案的单：录音不再上传，这里直接从档案里取那份 voice_path。
+  // 取不到就退回"等录音"的老路 —— 档案可能刚过期、刚被撤回，
+  // 而那种情况下把整单打回去是最差的处理：用户什么也没做错。
+  let voicePath = null;
+  if (useOwnVoice !== false && reuseVoice) {
+    const p = await getVoiceProfile({ openid: openid || null, token: deviceToken || null });
+    voicePath = p?.voice_path || null;
+  }
 
   const order = await createOrder({
     story: story.trim(),
@@ -131,7 +191,18 @@ app.post('/api/orders', wrap(async (req, res) => {
     to_name: toName || null,
     from_name: fromName || null,
     ref_song: refSong || null,
+    // 定调页挑的那张声音卡。sound 是给写歌模型的英文约束，用户看不见它。
+    tune: tune || null,
     openid: openid || null,
+    // 缺省为 true 是为了兼容老版本小程序：它们不发这个字段，而它们的行为
+    // 就是"要用自己的声音"。默认成 false 会让老客户端的单全部退化成原版。
+    use_own_voice: useOwnVoice !== false,
+    // 档案里有就直接挂上，这一单不必再等上传。pipeline 分轨完成时会看这一列，
+    // 看到了就直接启动换声（那段「谁最后到谁负责启动第二波」的逻辑不用改）。
+    voice_path: voicePath,
+    // 存证原样落库。**永远不要在这儿做"清洗"或"归一化"** ——
+    // 存证的价值在于它是当时那一份，改过的存证等于没有存证。
+    consent: Array.isArray(consent) && consent.length ? consent : null,
     status: 'created',
   });
 
@@ -193,13 +264,74 @@ app.post('/api/orders/:id/voice', upload.single('file'), wrap(async (req, res) =
     updated_at: new Date().toISOString(),
   });
 
+  /**
+   * 顺手建档（或者换掉旧档）。
+   *
+   * 放在这儿而不是单独开一个上传接口：录音只有这一条路进得来，
+   * 在这一条路上建档，就不会出现"传了但没建档"的中间态。
+   *
+   * 建档失败不回滚这一单 —— 录音已经挂在订单上了，这首歌照做。
+   * 代价只是下次要重录一遍，那比让用户看见"提交失败"好得多。
+   */
+  let profile = null;
+  try {
+    profile = await putVoiceProfile({
+      openid: order.openid || null,
+      token: req.body?.deviceToken || null,
+      voicePath: path,
+      durationSec: Number(req.body?.durationSec) || null,
+      audioMd5: req.body?.audioMd5 || null,
+      consent: order.consent || null,
+    });
+  } catch (e) {
+    console.warn(`order ${order.id} 建声音档案失败（不影响本单）:`, e.message);
+  }
+
   // 录音和分轨谁后到谁启动第二波。这里是「录音后到」的那一半；
   // 另一半在 pipeline.js 分轨完成处。
   if (updated.vocal_url && updated.instrumental_url) {
     runVoiceSwap(updated).catch((e) => console.error('swap crashed:', e));
   }
 
-  res.json({ ok: true, path, bytes: req.file.size });
+  res.json({ ok: true, path, bytes: req.file.size, voice: publicVoice(profile) });
+}));
+
+/**
+ * 撤回授权：删掉这一单的录音。
+ *
+ * 「授权人有权随时撤回」写在授权书第三条里，那这条路就必须真的能跑通。
+ * 监管检查和用户投诉时第一个被验证的就是它 ——「你说能删，现在删一个我看看」。
+ *
+ * 删的是**录音本体**，不是订单：已经交付的成品归用户所有，撤回不影响
+ * 撤回前已完成的交付（授权书 3.4）。同时把 use_own_voice 翻成 false，
+ * 否则换声那一步还会去 bucket 里找一个已经不存在的文件。
+ *
+ * consent 那一列不删：它记的是"用户当时同意过"这件事本身，不含声纹数据，
+ * 删掉反而失去了证明我们履行过义务的依据。撤回动作自己也追加一条。
+ */
+app.delete('/api/orders/:id/voice', wrap(async (req, res) => {
+  const order = await getOrder(req.params.id);
+  if (!order) return res.status(404).json({ error: 'not found' });
+
+  if (order.voice_path) {
+    const { error } = await db.storage.from(BUCKET).remove([order.voice_path]);
+    // 文件已经不在了也算删成功 —— 用户要的结果已经达成，报错只会让他再点一次
+    if (error && !/not found/i.test(error.message)) {
+      throw new Error(`删除录音失败: ${error.message}`);
+    }
+  }
+
+  const trail = Array.isArray(order.consent) ? order.consent.slice() : [];
+  trail.push({ layer: 'revoke', revokedAt: new Date().toISOString() });
+
+  await updateOrder(order.id, {
+    voice_path: null,
+    use_own_voice: false,
+    consent: trail,
+    updated_at: new Date().toISOString(),
+  });
+
+  res.json({ ok: true });
 }));
 
 const port = Number(process.env.PORT || 3000);

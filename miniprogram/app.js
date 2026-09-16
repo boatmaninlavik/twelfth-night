@@ -48,7 +48,10 @@ App({
     // 一次下单的全部状态，页面间靠它传递。内测阶段够用；
     // 真要多单并行再换成每页 query 带 orderId。
     openid: null,
-    draft: { occasion: '', story: '', toName: '', refSong: null },
+    draft: { occasion: '', story: '', toName: '', refSong: null, tune: null },
     orderId: null,
+    // 这次启动有没有把人自动送回过那首还没看的歌。只送一回 ——
+    // 送第二回就成了"用户退出来、又被推回去"，扉页永远够不着（见 pages/index）。
+    resumed: false,
   },
 });

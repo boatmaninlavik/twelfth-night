@@ -15,7 +15,217 @@
   margin-left: 8rpx;            /* 转 45 度后视觉重心偏右，往回挪一点才居中 */
 }
 
-/* 非编辑态那个 view 和编辑态的 textarea 共用 .panel.tall，
+/* 非编辑态那个 view 和编辑态的 textarea 共用同一个盒子，
    两者的换行行为必须一致，否则切换的一瞬间文字会跳。 */
-.panel.tall { margin-top: 44rpx; }
+.panel.tall, .panel.mid { margin-top: 44rpx; }
 .is-ph, .ph { color: #B8B1A0; }
+
+/* 一问一答的框只有三行高。
+   340rpx 的大框在心理上等于"你得写一篇"，192rpx 等于"几个字就行" ——
+   这一页的全部工作就是让人愿意动手，框的高度是这里最有力的一句话。 */
+.panel.mid {
+  height: auto;
+  min-height: 192rpx;
+  padding: 28rpx 30rpx;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+
+/* ── 提词卡 ──────────────────────────────────────────
+   用全局的 .panel-list（搜歌结果那一套）：行与行之间一根界栏，外面一圈细边。
+   这一副牌是"要挑的东西"，跟搜索结果是同一类交互，不该另起一套长相。 */
+.cards { margin-top: 48rpx; }
+
+/* ── 一条线 ────────────────────────────────────────────
+   三个节点竖着排，左边一根 1rpx 的线把它们串起来 —— 跟全册的界栏是同一根线。
+   没有方框、没有卡片：这一屏要的是"一条线"的意象，不是三张牌。
+
+   之所以不用 .panel-list（原来那套圆角列表），是因为那套的 .row 是
+   display:flex，会把大字小字并排塞进一行、各自换行，怎么排都不齐 ——
+   图上看着像"排版随意"，其实是选择器权重打输了。这里索性另起一套。 */
+.line { margin-top: 52rpx; }
+
+.node {
+  position: relative;
+  padding: 0 0 40rpx 52rpx;
+}
+.node.last { padding-bottom: 0; }
+
+/* 节点的圆。答过了实心，没答空心 —— 这就是进度。 */
+.node::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 8rpx;
+  width: 16rpx; height: 16rpx;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1rpx var(--brass);
+}
+.node.done::before { background: var(--brass); }
+
+/* 串起三个点的那根线。最后一节不画，线不该悬在空中。 */
+.node::after {
+  content: "";
+  position: absolute;
+  left: 8rpx; top: 32rpx; bottom: 0;
+  width: 1rpx;
+  background: var(--rule);
+}
+.node.last::after { display: none; }
+
+.node-k {
+  font-family: var(--serif);
+  font-size: 22rpx;
+  letter-spacing: 8rpx;
+  text-indent: 8rpx;
+  color: var(--brass);
+}
+
+.node-q {
+  margin-top: 14rpx;
+  font-family: var(--serif);
+  font-size: 34rpx;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+/* 答过的：把他自己写的字还给他。两行封顶，长了就省略 ——
+   这一屏是目录不是正文，看全文该点进去。 */
+.node-a {
+  margin-top: 14rpx;
+  font-size: 25rpx;
+  line-height: 1.75;
+  color: var(--ink-soft);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* 没答的：写这一节要什么，不写「未填写」。
+   「一个能看见的画面」是提示，「未填写」是催促。 */
+.node-empty {
+  margin-top: 14rpx;
+  font-size: 25rpx;
+  line-height: 1.75;
+  color: var(--muted);
+}
+.cue-q {
+  font-family: var(--serif);
+  font-size: 30rpx;
+  line-height: 1.5;
+  color: var(--ink);
+}
+/* 卡面小字示范的是**颗粒度**，不是文采。所以它是例子，不是说明。 */
+.cue-eg {
+  margin-top: 10rpx;
+  font-size: 23rpx;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* 「换 一 批」。跟 order 页参考歌那里的「换」是同一个东西，同一个长相。 */
+.swap-row { display: flex; justify-content: flex-end; padding-top: 22rpx; }
+.swap {
+  padding: 12rpx 4rpx;          /* 只有几个字，得撑出够得着的点击区 */
+  font-family: var(--serif);
+  font-size: 25rpx;
+  letter-spacing: 4rpx;
+  color: var(--brass);
+}
+
+
+/* ── 换个问法 / 按新答案重排 ─────────────────────────
+   都是"这条路走不通时的另一条路"，所以长得一样、都很轻。 */
+.tools { display: flex; padding-top: 20rpx; }
+.tool {
+  padding: 16rpx 4rpx;
+  font-size: 24rpx;
+  letter-spacing: 2rpx;
+  color: var(--muted);
+}
+
+
+/* ── 记下了 ──────────────────────────────────────────
+   整条引导里最有效的一处：把他自己写的词挑出来还给他，
+   他立刻就懂了这一页要什么颗粒度 —— 示范用的是他自己的话，不是我们编的范文。 */
+.marks {
+  margin-top: 36rpx;
+  padding-top: 32rpx;
+  border-top: 1rpx solid var(--rule);
+}
+.marks-label {
+  font-family: var(--serif);
+  font-size: 22rpx;
+  letter-spacing: 8rpx;
+  text-indent: 8rpx;
+  color: var(--brass);
+}
+.marks-list {
+  margin-top: 20rpx;
+  font-family: var(--serif);
+  font-size: 27rpx;
+  line-height: 1.8;
+  color: var(--ink-soft);
+}
+.marks-note {
+  margin-top: 16rpx;
+  font-size: 23rpx;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+/* ── 示例答 ──────────────────────────────────────────
+   破折号起头，跟扉页那句「— 莎士比亚《第十二夜》」是同一个记号：
+   这是引别人的话，不是本页的说明文字。 */
+.egs {
+  margin-top: 32rpx;
+  padding-top: 32rpx;
+  border-top: 1rpx solid var(--rule);
+}
+.egs-label {
+  font-family: var(--serif);
+  font-size: 22rpx;
+  letter-spacing: 8rpx;
+  text-indent: 8rpx;
+  color: var(--muted);
+}
+.eg {
+  margin-top: 20rpx;
+  font-family: var(--serif);
+  font-size: 26rpx;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+
+/* ── 合稿页的细节盘点 ────────────────────────────────
+   不拦人、不做进度条、不显示 120/800。
+   「记下了 8 个只有你知道的细节」比任何字数统计都更说明问题。 */
+.tally {
+  margin-top: 36rpx;
+  padding-top: 32rpx;
+  border-top: 1rpx solid var(--rule);
+}
+.tally-n {
+  font-family: var(--serif);
+  font-size: 27rpx;
+  line-height: 1.7;
+  letter-spacing: 2rpx;
+  color: var(--brass);
+}
+.tally-note {
+  margin-top: 16rpx;
+  font-size: 23rpx;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+
+/* 全局 .btn 的 72rpx 是给"一屏只有一个按钮"那种页排的，这一页上面东西多，收一点。 */
+.story .btn { margin-top: 52rpx; }
+.story .btn.stack { margin-top: 24rpx; }      /* 虚框按钮下面紧跟的那个实心的 */
+/* 按钮底下的那行小字（「这一问跳过」）贴着按钮走，别用全局那 40rpx。 */
+.story .btn + .link { margin-top: 16rpx; }
