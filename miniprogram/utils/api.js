@@ -1,18 +1,22 @@
 /**
  * 后端地址。
  *
- * 现在指向 Modal 上托管的服务（app twelfth-api，workspace erised2），
- * **不再是这台开发机**。以前是局域网 IP + 明文 HTTP，意味着：
- *   · 开发者笔记本一合盖，用户在手机上就什么都做不了
- *   · 每换一次 Wi-Fi 都要来改这一行（这个坑踩过三次）
- *   · 真机必须开"调试"才连得上，体验版发不出去
+ * 指向已备案的自有域名。备案是硬条件：微信要求 request 合法域名必须已 ICP 备案，
+ * 而上一版用的 erised2--twelfth-api-api.modal.run 是境外域名，备不了案 ——
+ * 开发者工具里的 urlCheck:false 只骗得过工具自己和开发版，
+ * **体验版和正式版强制校验**，所以那个地址根本发不出体验版。
  *
- * 换成 https 之后，只要把这个域名加进小程序后台的服务器域名白名单，
- * 就不再需要"不校验合法域名"那个开关，体验成员扫码就能用。
+ * 后台要配的是**三张表**，都填这同一个域名。少一张就是一个只在体验版复现的 bug：
+ *   request       wx.request       —— 下面所有接口
+ *   uploadFile    wx.uploadFile    —— 上传录音，漏了的话下单走到最后一步才失败
+ *   downloadFile  wx.loadFontFace  —— app.js 的自带宋体，漏了整个界面退回系统字体
+ *
+ * 成品 mp3 不在这三张表里：那是 Supabase 签发的临时 URL，由 innerAudioContext
+ * 播放，而音频播放不走合法域名校验 —— 不用配，也不受这一行影响。
  *
  * 本地调试后端时把 BASE 换成 http://<本机IP>:3100，并重新打开那两个开关。
  */
-const BASE = 'https://erised2--twelfth-api-api.modal.run';
+const BASE = 'https://api.listeningmirage.com';
 
 function request(path, options = {}) {
   return new Promise((resolve, reject) => {
