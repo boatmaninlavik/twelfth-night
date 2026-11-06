@@ -12,6 +12,21 @@
   color: var(--ink);
 }
 .scale-rule { margin-top: 28rpx; }
+
+/* 两种录法的切换。紧贴标题下面 —— 它是这一页的第一个决定，
+   在读到"怎么唱"之前就该看见"能怎么唱"。用全局的 .pill，
+   跟定歌页选场合是同一类交互，不另起一套长相。 */
+.takes { display: flex; gap: 18rpx; margin-top: 36rpx; }
+
+/* 自己唱那一路的「谱面」。占 .scale 同一个位置和分量，但换回中文字体、
+   去掉斜体 —— serif-en 的 italic 是给 do re mi 那串拉丁唱名的，
+   中文套上去会歪。 */
+.own-say {
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 36rpx;
+  letter-spacing: 8rpx;
+}
 .gloss {
   margin-top: 22rpx;
   font-size: 24rpx;
@@ -227,23 +242,6 @@
   flex: none;
   padding: 32rpx 56rpx 56rpx;
   border-top: 1rpx solid var(--rule);
-}
-
-/* 年龄分档。用全局的 .pills（定歌页选场合那一套）—— 同一类交互，
-   同一个长相，不另起一套。 */
-.ages-label {
-  font-family: var(--serif);
-  font-size: 22rpx;
-  letter-spacing: 8rpx;
-  text-indent: 8rpx;
-  color: var(--muted);
-}
-.ages .pills { margin-top: 16rpx; }
-.ages-hint {
-  margin-top: 18rpx;
-  font-size: 23rpx;
-  line-height: 1.7;
-  color: var(--muted);
 }
 
 /* 勾选框。直角、一根细边，勾上才上那点金 —— 跟场合标签是同一套做法。

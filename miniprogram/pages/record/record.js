@@ -23,8 +23,13 @@ const MAX_SECONDS = 30;
 // 这个串是**存证**：它记的是"我们当时让用户做了什么"，会随同意记录一起落库。
 // 所以屏幕上的音阶一改，这里必须跟着改 —— 否则那份存证描述的是另一次录音，
 // 真要拿出来对质的时候，它证明不了任何事。
-const RECORD_PROMPT = '跟着唱一遍：do re mi fa sol la si do / do si la sol fa mi re do'
-                    + '（从最低唱到最高再唱回来，约二十秒）';
+// 两种录法并存：唱自己熟悉的歌放得开、不尴尬；音阶的音域覆盖更全，换声更稳。
+// 存证里记的是**他实际选的那一种**，不是默认值。
+const PROMPTS = {
+  own:   '唱一段自己熟悉的歌，哪一段都行，约二十秒',
+  scale: '跟着唱一遍：do re mi fa sol la si do / do si la sol fa mi re do'
+       + '（从最低唱到最高再唱回来，约二十秒）',
+};
 
 let player = null;
 const rec = wx.getRecorderManager();
@@ -50,14 +55,16 @@ Page({
     occasion: '', theme: '', mode: '',
     recording: false, elapsed: 0, filePath: '', duration: 0, busy: false,
 
-    // 授权
-    useOwnVoice: true,     // 第一层被拒之后翻成 false，走歌手音色那条路
-    consented: false,      // 第一层已同意（这台设备、当前条款版本）
-    sheet: '',             // '' | 'l1' | 'l2'
+    // 录音方式。两种都行，存证里记他实际选的那一种。
+    take: 'own',           // 'own' 唱自己的歌 | 'scale' 跟着音阶
+
+    // 授权。一份文件、一次勾选，在**按下录音键之前**问。
+    useOwnVoice: true,     // 被拒之后翻成 false，走歌手音色那条路
+    consented: false,      // 已同意（这台设备、当前条款版本）
+    sheet: false,          // 授权纸开着没有
     doc: null, docTitle: '',
     checks: [], allChecked: false, canRevoke: false,
     readonly: false,       // 回来读一遍，不是来签的
-    ageBands: consent.AGE_BANDS, ageBand: '',
 
     // 声音档案。有档案就不必重录，直接用（utils/voice.js）
     hasVoice: false, voiceWhen: '', voiceDur: 0, voiceLeft: 0,
@@ -72,7 +79,7 @@ Page({
     this.setData({
       occasion: oc,
       theme: theme.slug(oc),
-      consented: !consent.needsL1(),
+      consented: !consent.needs(),
     });
 
     // 先用本机缓存的那份画出来，再去服务端核对 —— 网络慢的那两秒不该是一张
@@ -171,7 +178,7 @@ Page({
   noop() {},
 
   /** 页脚的常驻入口。已经同意过的，进来能看见「撤回」。 */
-  openL1() { this.openSheet('l1'); },
+  openL1() { this.openSheet(); },
 
   /**
    * 授权书的只读入口。
@@ -180,50 +187,39 @@ Page({
    * 只读态里勾选框和签署键都不出现：一份已经签过的文件再摆一次勾选框，
    * 是在诱导重复签署。
    */
-  openL2Read() { this.openSheet('l2', true); },
+  openL2Read() { this.openSheet(true); },
 
-  openSheet(which, readonly) {
-    // 第一层的条款随年龄档变：未成年那两档要追加「给监护人」，
-    // 未满 14 岁还要再追加一份专门规则。没选年龄时 checks 是空的。
-    const band = readonly ? 'adult' : '';
-    const doc = which === 'l1' ? consent.l1(band) : consent.L2;
+  openSheet(readonly) {
+    const doc = consent.DOC;
     this._shownAt = Date.now();       // 展示时长：秒开秒关的同意是站不住的
     this._readEnd = false;
     this.setData({
-      sheet: which,
+      sheet: true,
       doc,
       readonly: !!readonly,
-      ageBand: band,
       docTitle: String(doc.title).replace(/\{br\}/g, '\n'),
       // 默认一个都不勾。这一条是硬要求，不是风格。
       checks: doc.checks.map(() => false),
       allChecked: false,
-      // 撤回入口在两张纸上都给：用户想撤回时会去翻的是"授权"这两个字，
-      // 未必分得清自己当时同意的是第一层还是第二层。
-      canRevoke: !consent.needsL1(),
+      canRevoke: !consent.needs(),
     });
   },
 
-  closeSheet() { this.setData({ sheet: '', doc: null, readonly: false }); },
+  closeSheet() { this.setData({ sheet: false, doc: null, readonly: false }); },
 
   /** 「滚动到底」—— 证明用户有机会读完全文，成本几乎为零的一条存证。 */
   onReadEnd() { this._readEnd = true; },
 
   /**
-   * 选年龄档。换档要把整份条款重新拼一遍（未成年会多出两节正文），
-   * 而且**已经勾上的全部清掉** —— 换了对象再问一次，不能让上一档的勾选留着算数。
+   * 选录音方式。换了之后**已录的那一条作废** ——
+   * 存证里记的提示语必须和他实际唱的那一次对得上；留着上一种录法的音频，
+   * 那份存证描述的就是另一回事了。
    */
-  pickAge(e) {
-    const k = e.currentTarget.dataset.k || '';
-    const doc = consent.l1(k);
-    this._readEnd = false;            // 正文变长了，之前那次"读到底"不作数
-    this.setData({
-      ageBand: k,
-      doc,
-      docTitle: String(doc.title).replace(/\{br\}/g, '\n'),
-      checks: doc.checks.map(() => false),
-      allChecked: false,
-    });
+  pickTake(e) {
+    const k = e.currentTarget.dataset.k || 'own';
+    if (k === this.data.take) return;
+    this._md5 = null; this._bytes = null;
+    this.setData({ take: k, filePath: '', duration: 0, elapsed: 0 });
   },
 
   toggleCheck(e) {
@@ -238,46 +234,27 @@ Page({
    * 死按钮在这儿尤其糟：用户会以为是程序坏了，而不是自己漏了一勾。
    */
   agree() {
-    const { checks, doc, sheet, ageBand } = this.data;
-    if (sheet === 'l1' && !ageBand) {
-      return wx.showToast({ title: '先选一下这段声音是谁的', icon: 'none' });
-    }
+    const { checks, doc } = this.data;
     if (!checks.length || !checks.every(Boolean)) {
       const i = checks.findIndex((c) => !c);
       return wx.showToast({ title: `还差一条：${doc.checks[i]}`, icon: 'none' });
     }
     const ev = consent.evidence({
-      layer: sheet === 'l1' ? 1 : 2,
       version: doc.version,
       checks: checks.slice(),
       shownAt: this._shownAt,
       readEnd: this._readEnd,
-      extra: sheet === 'l2' ? this._l2Extra() : {
-        prompt: RECORD_PROMPT,
-        // 谁作的这个决定，是这条存证里最要紧的一项：
-        // 未成年那两档的同意人是监护人，不是唱歌的那个人。
-        ageBand,
-        signerRole: ageBand === 'adult' ? 'self' : 'guardian',
-      },
+      // 记下他当时选的是哪一种录法 ——「现场录制」那句声明指的就是这一次。
+      extra: { prompt: PROMPTS[this.data.take], take: this.data.take },
     });
-
-    if (sheet === 'l1') {
-      consent.saveL1(ev);
-      this.setData({ consented: true, useOwnVoice: true });
-      this.closeSheet();
-      return this.startRec();          // 按钮上写的是「同意，开始录音」，就得真开始
-    }
-
-    // 第二层：签完就下单。存证随订单一起送到服务端，本地也留一份备查。
-    this._grant = ev;
-    consent.saveL2(ev);
+    consent.save(ev);
+    this.setData({ consented: true, useOwnVoice: true });
     this.closeSheet();
-    this.doSubmit();
+    this.startRec();          // 按钮上写的是「同意，开始录音」，就得真开始
   },
 
   decline() {
-    if (this.data.sheet === 'l2') return this.closeSheet();   // 「再看看」，什么都不改
-    // 第一层被拒：翻到歌手音色那条路。不弹二次挽留 ——
+    // 拒绝：翻到歌手音色那条路。不弹二次挽留 ——
     // 在敏感个人信息这一处反复劝，本身就是不该有的设计。
     this.closeSheet();
     this.setData({ useOwnVoice: false, filePath: '', duration: 0, elapsed: 0 });
@@ -297,7 +274,7 @@ Page({
       confirmText: '撤回',
       success: ({ confirm }) => {
         if (!confirm) return;
-        consent.clearL1();
+        consent.clear();
         voice.clear();
         // 删档案本体（连同 bucket 里那个文件）。撤回删的是**档案**不是**订单**——
         // 授权书 3.4：撤回不影响撤回前已完成的交付，已交付的成品归授权人所有。
@@ -316,12 +293,16 @@ Page({
     });
   },
 
-  /** 第二层要多带两样：录音的哈希，和当时的提示语。 */
-  _l2Extra() {
+  /**
+   * 下单时随单送出的那一份：在**已签的那条同意**之上，补这一单实际的录音信息。
+   * 用户只点过一次，但每一单都要有自己的记录。
+   */
+  _grantExtra() {
     const p = this._profile;
     const reuse = this.data.useOwnVoice && this.data.hasVoice;
     return {
-      prompt: RECORD_PROMPT,
+      prompt: PROMPTS[this.data.take],
+      take: this.data.take,
       // 跟 doSubmit 里那个 useOwn 必须是同一个式子：存证里记的得是
       // 这一单**实际**怎么做的，不是界面上当时的开关长什么样。
       useOwnVoice: this.data.useOwnVoice && (reuse || !!this.data.filePath),
@@ -341,7 +322,7 @@ Page({
   /** 录音键。没同意过就先弹第一层 —— 采集之前问，不是采集之后。 */
   toggle() {
     if (this.data.recording) return rec.stop();
-    if (consent.needsL1()) return this.openSheet('l1');
+    if (consent.needs()) return this.openSheet();
     this.startRec();
   },
 
@@ -410,26 +391,24 @@ Page({
     if (this.data.busy) return;
     const reuse = this.data.useOwnVoice && this.data.hasVoice;
 
-    // 没交声音的那条路**不签这份授权书**。授权书第一条声明的是
-    // 「本次提交的语音样本系本人现场录制」—— 一份声音都没提交的单，
-    // 让人签这个既讲不通，也让这份文件从"有意义的承诺"变成"过场"。
+    // 没交声音的那条路直接下单。
     if (!this.data.useOwnVoice || (!reuse && !this.data.filePath)) return this.doSubmit();
+    // 用旧档案的这一单也直接走：录音没变，哈希取自档案。
+    if (reuse) return this.doSubmit();
 
-    // 用旧档案的这一单**照样要签**。第一层（单独同意）是一次性的、按条款版本算，
-    // 但授权书是**按单留证**的：这一首用了你的声音，就得有这一首的那张纸。
-    // 省掉它等于第二首之后全部没有留证，而那正是出事时要拿出来的东西。
-    if (!reuse) {
-      if (this.data.duration < MIN_SECONDS) {
-        return wx.showToast({ title: `太短了，唱满 ${MIN_SECONDS} 秒`, icon: 'none' });
-      }
-      // 录音哈希：证明后续用的样本和签署时那一份是同一个。
-      // 算它要读一遍文件，所以趁用户读条款的这十几秒算，不占提交的时间。
-      this.hashTake();
+    if (this.data.duration < MIN_SECONDS) {
+      return wx.showToast({ title: `太短了，唱满 ${MIN_SECONDS} 秒`, icon: 'none' });
     }
-    this.openSheet('l2');
+    // 录音哈希：证明后续用的样本和签署时那一份是同一个。
+    // 原来这一步能趁用户读第二张纸的十几秒算完；现在只有一份授权、
+    // 而且早在录音前就签过了，所以必须**等它回来再下单**。
+    // 算不出来也继续 —— 存证少一项，好过让用户交不了单。
+    this.setData({ busy: true });
+    this.hashTake(() => this.doSubmit());
   },
 
-  hashTake() {
+  hashTake(done) {
+    const go = () => { if (done) done(); };
     try {
       wx.getFileSystemManager().getFileInfo({
         filePath: this.data.filePath,
@@ -437,9 +416,11 @@ Page({
         success: (r) => { this._md5 = r.digest || null; this._bytes = r.size || null; },
         // 哈希拿不到不该挡住下单：存证少一项，总好过用户交不了单
         fail: (e) => console.warn('getFileInfo 失败:', e.errMsg),
+        complete: go,
       });
     } catch (e) {
       console.warn('getFileInfo threw:', e);
+      go();
     }
   },
 
@@ -462,6 +443,15 @@ Page({
 
       const reuse = this.data.useOwnVoice && this.data.hasVoice;
       const useOwn = this.data.useOwnVoice && (reuse || !!this.data.filePath);
+      /* 按单留证。用户只签过一次，但每一单都要有自己的那条记录。
+         做法是在**已签的那条存证**上补这一单的录音信息，而不是重新
+         evidence() 一份 —— 重新生成会把 signedAt 改成下单时间，
+         那等于伪造签署时刻，是这套东西里最不能出的错。 */
+      const signed = consent.read();
+      const grant = signed
+        ? { ...signed, ...this._grantExtra(), boundAt: new Date().toISOString() }
+        : null;
+      if (grant) consent.saveGrant(grant);
       const order = await api.createOrder({
         story: d.story, occasion: d.occasion, toName: d.toName, refSong: d.refSong,
         openid: app.globalData.openid || null,
@@ -472,7 +462,7 @@ Page({
         reuseVoice: reuse,
         deviceToken: voice.token(),
         // 存证随单落库。授权书本身不重要，能证明"这个人在这个时间确实同意了"才重要。
-        consent: [consent.readL1(), this._grant].filter(Boolean),
+        consent: [grant].filter(Boolean),
       });
       app.globalData.orderId = order.id;
 

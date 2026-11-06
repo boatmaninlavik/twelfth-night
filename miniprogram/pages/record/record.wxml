@@ -36,17 +36,37 @@
 
   <!-- ══ 用自己的声音（第一次，或者主动重录） ═══════════ -->
   <block wx:elif="{{useOwnVoice}}">
-    <view class="h1">跟着唱一遍</view>
+    <!-- 两种录法。唱自己熟悉的歌最放得开 —— 对着音阶唱对很多人是件尴尬的事，
+         而紧张会直接写进声线里。音阶的好处是音域覆盖全、换声更稳，
+         所以两种都给，默认那一种是门槛低的。
+         ⚠️ 换一种录法会作废已录的那条（record.js 的 pickTake）：
+         存证里记的提示语必须和他实际唱的那一次对得上。 -->
+    <view class="h1">唱一段自己熟悉的歌{{'\n'}}或者跟着唱一遍</view>
 
-    <!-- 音阶用唱名排，宽字距摊开 —— 这是这一页的主视觉，当乐谱排，不当说明文字。
+    <view class="takes">
+      <view class="pill {{take === 'own' ? 'on' : ''}}" data-k="own" bindtap="pickTake"
+            hover-class="pressed" hover-start-time="0" hover-stay-time="90">唱自己的歌</view>
+      <view class="pill {{take === 'scale' ? 'on' : ''}}" data-k="scale" bindtap="pickTake"
+            hover-class="pressed" hover-start-time="0" hover-stay-time="90">跟着音阶唱</view>
+    </view>
+
+    <!-- 音阶用唱名排，宽字距摊开 —— 当乐谱排，不当说明文字。
          **上行加下行，十四个音**：七个音摊到二十秒是每音近三秒，再慢也拖得吃力，
-         而人一吃力就会在高音上抢拍。十四个音每音一秒半，是正常的开嗓速度，
-         用户自己就能把节奏控住。
-         顺带一个好处：上去再下来，等于每个音高都唱了两遍，
-         换声模型拿到的样本比单程更稳。 -->
-    <view class="scale">do re mi fa sol la si do{{'\n'}}do si la sol fa mi re do</view>
-    <view class="rule scale-rule"></view>
-    <view class="gloss">从最低唱到最高，再唱回来，约二十秒</view>
+         而人一吃力就会在高音上抢拍。十四个音每音一秒半，是正常的开嗓速度。
+         顺带一个好处：上去再下来，等于每个音高都唱了两遍，样本比单程更稳。 -->
+    <block wx:if="{{take === 'scale'}}">
+      <view class="scale">do re mi fa sol la si do{{'\n'}}do si la sol fa mi re do</view>
+      <view class="rule scale-rule"></view>
+      <view class="gloss">从最低唱到最高，再唱回来，约二十秒</view>
+    </block>
+
+    <!-- 自己唱那一路不给谱面，只说清楚两件会影响成品的事：
+         唱够长度（音域才铺得开），别放伴奏（伴奏会被一起复刻进声线）。 -->
+    <block wx:else>
+      <view class="scale own-say">哪一段都行{{'\n'}}副歌最好</view>
+      <view class="rule scale-rule"></view>
+      <view class="gloss">清唱，别放伴奏，唱满二十秒左右</view>
+    </block>
 
     <!-- 说的是**原因**不是要求。「请在安静环境下录音」是一条命令，人会略过；
          「背景里的声音会被复刻进你的声线」是一个后果，人会照做。 -->
@@ -136,22 +156,6 @@
     </view>
 
     <view class="sheet-foot" wx:else>
-
-      <!-- 年龄。不是「我已满 18 岁」那种一刀切 —— 那会把「孩子唱给爸妈」
-           整条线砍掉。分三档，未成年那两档改由监护人代为授权，
-           未满 14 岁还会在正文里多出一份专门规则（个保法 31 条要求的）。
-           年龄用**选择**、授权用**勾选**，两件事分开摆，不打包。 -->
-      <view class="ages" wx:if="{{sheet === 'l1'}}">
-        <view class="ages-label">这段声音是谁的</view>
-        <view class="pills">
-          <view class="pill {{ageBand === item.k ? 'on' : ''}}" wx:for="{{ageBands}}" wx:for-item="item" wx:key="k"
-                data-k="{{item.k}}" bindtap="pickAge" hover-class="pressed" hover-start-time="0" hover-stay-time="90">{{item.t}}</view>
-        </view>
-      </view>
-
-      <!-- 没选年龄就不出勾选框：逼着人先回答年龄这一问，
-           而不是勾完了才发现问错了对象。 -->
-      <view class="ages-hint" wx:if="{{sheet === 'l1' && !ageBand}}">先选一档，下面的内容会跟着变</view>
 
       <view class="check" wx:for="{{doc.checks}}" wx:key="*this"
             data-i="{{index}}" bindtap="toggleCheck" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
