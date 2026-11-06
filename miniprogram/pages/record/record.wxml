@@ -95,18 +95,18 @@
     <view class="sub">词、曲、编曲都不变，{{'\n'}}只是唱的人不是你</view>
 
     <view class="btn" bindtap="submit" disabled="{{busy}}" hover-class="pressed" hover-start-time="0" hover-stay-time="90">{{busy ? '提交中' : '就这样，提交'}}</view>
-    <view class="link" bindtap="openL1" hover-class="pressed" hover-start-time="0" hover-stay-time="90">还是用我的声音</view>
+    <view class="link" bindtap="signDoc" hover-class="pressed" hover-start-time="0" hover-stay-time="90">还是用我的声音</view>
   </block>
 
   <!-- 版权页注记的位置：沉到最底下，字最小，说完就退场。 -->
-  <!-- 两个入口都得一直开着：
-       「随时可以撤回」和「可随时查看本授权书」是条款里白纸黑字的两句，
-       界面上没有入口，那两句就是假的。 -->
+  <!-- 这个入口得一直开着：「可随时查看本授权书」和「随时可以撤回」是条款里
+       白纸黑字的两句，界面上没有入口，那两句就是假的。撤回键挂在这张纸的页脚。
+       原来这儿并排摆着「授权说明」和「授权书」两个链接 —— 那是两层授权各一个。
+       两层并成一份之后它们指向同一份文件，留两个只会让人以为有两份东西要读。 -->
   <view class="notice">
     <block wx:if="{{consented}}">这段录音只用于生成你的声线，随时可删除</block>
     <block wx:else>录音之前，我们会就声音这件事单独征求你的同意</block>
-    <text class="notice-link" bindtap="openL1">授权说明</text>
-    <text class="notice-link" bindtap="openL2Read">授权书</text>
+    <text class="notice-link" bindtap="readDoc">授权书</text>
   </view>
 </view>
 
