@@ -1,26 +1,168 @@
-<view class="page t-{{theme}} {{mode}}">
-  <view class="eyebrow">声音</view>
+<view class="page t-{{theme}} {{mode}}" style="padding-top:{{padTop}}rpx">
 
-  <view class="h1">跟着唱一遍</view>
-
-  <!-- 音阶用唱名排，宽字距摊开 —— 这是这一页的主视觉，当乐谱排，不当说明文字 -->
-  <view class="scale">do re mi fa sol la si do</view>
-  <view class="rule scale-rule"></view>
-  <view class="gloss">从最低唱到最高，慢一点，约二十秒</view>
-
-  <view class="mic-wrap">
-    <view class="mic {{recording ? 'on' : ''}}" bindtap="toggle" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
-      <view class="dot"></view>
-    </view>
-    <view class="timer" wx:if="{{recording}}">{{elapsed}}″</view>
-    <view class="muted" wx:elif="{{!filePath}}">点一下开始</view>
+  <!-- 返回。这一页原来**一个返回键都没有** —— navigationStyle 是 custom，
+       系统不画箭头，安卓机上进来就出不去了，只能杀掉小程序重进。
+       top 跟右上角胶囊对齐（utils/nav.js）。 -->
+  <view class="back" style="top:{{navTop}}rpx;height:{{navSize}}rpx"
+        bindtap="back" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
+    <view class="chev"></view>
   </view>
 
-  <block wx:if="{{filePath && !recording}}">
-    <view class="btn btn-ghost" bindtap="play" hover-class="pressed" hover-start-time="0" hover-stay-time="90">听 一 下（{{duration}}″）</view>
-    <view class="btn" bindtap="submit" disabled="{{busy}}" hover-class="pressed" hover-start-time="0" hover-stay-time="90">{{busy ? '上 传 中' : '就 用 这 段'}}</view>
-    <view class="link" bindtap="reset" hover-class="pressed" hover-start-time="0" hover-stay-time="90">重录</view>
+  <view class="eyebrow">声音</view>
+
+  <!-- ══ 已经有档案：不必重录 ═══════════════════════════
+       第二次下单的人立刻会发现重录很蠢——「我上次不是已经唱过了吗」。
+       录音挂在人身上不是挂在单上，12 个月内的单都用同一份。
+       但**每一单仍然要签授权书**：那份文件是按单留证的，不能省。 -->
+  <block wx:if="{{useOwnVoice && hasVoice}}">
+    <view class="h1">还用你的声音</view>
+    <view class="sub">{{voiceWhen}} 录的那一段，{{'\n'}}这首歌接着用它</view>
+
+    <view class="keep">
+      <view class="keep-row">
+        <view class="keep-k">时长</view>
+        <view class="keep-v">{{voiceDur}} 秒</view>
+      </view>
+      <view class="keep-row">
+        <view class="keep-k">还有效</view>
+        <view class="keep-v">{{voiceLeft}} 天</view>
+      </view>
+    </view>
+
+    <view class="btn" bindtap="submit" hover-class="pressed" hover-start-time="0" hover-stay-time="90">{{busy ? '提交中' : '就用这段'}}</view>
+    <view class="link" bindtap="reRecord" hover-class="pressed" hover-start-time="0" hover-stay-time="90">重新录一段，换掉它</view>
+    <view class="link" bindtap="useSinger" hover-class="pressed" hover-start-time="0" hover-stay-time="90">这次用歌手音色</view>
   </block>
 
-  <view class="notice">这段录音只用于生成你的声线，随时可删除。</view>
+  <!-- ══ 用自己的声音（第一次，或者主动重录） ═══════════ -->
+  <block wx:elif="{{useOwnVoice}}">
+    <view class="h1">跟着唱一遍</view>
+
+    <!-- 音阶用唱名排，宽字距摊开 —— 这是这一页的主视觉，当乐谱排，不当说明文字。
+         **上行加下行，十四个音**：七个音摊到二十秒是每音近三秒，再慢也拖得吃力，
+         而人一吃力就会在高音上抢拍。十四个音每音一秒半，是正常的开嗓速度，
+         用户自己就能把节奏控住。
+         顺带一个好处：上去再下来，等于每个音高都唱了两遍，
+         换声模型拿到的样本比单程更稳。 -->
+    <view class="scale">do re mi fa sol la si do{{'\n'}}do si la sol fa mi re do</view>
+    <view class="rule scale-rule"></view>
+    <view class="gloss">从最低唱到最高，再唱回来，约二十秒</view>
+
+    <!-- 说的是**原因**不是要求。「请在安静环境下录音」是一条命令，人会略过；
+         「背景里的声音会被复刻进你的声线」是一个后果，人会照做。 -->
+    <view class="quiet">找个安静的地方，没有音乐或其他杂音，背景里的声音会被复刻进你的声线</view>
+
+    <view class="mic-wrap">
+      <view class="mic {{recording ? 'on' : ''}}" bindtap="toggle" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
+        <view class="dot"></view>
+      </view>
+      <view class="timer" wx:if="{{recording}}">{{elapsed}}″</view>
+      <view class="muted" wx:elif="{{!filePath}}">点一下开始</view>
+    </view>
+
+    <block wx:if="{{filePath && !recording}}">
+      <view class="btn btn-ghost" bindtap="play" hover-class="pressed" hover-start-time="0" hover-stay-time="90">听一下（{{duration}}″）</view>
+      <view class="btn" bindtap="submit" disabled="{{busy}}" hover-class="pressed" hover-start-time="0" hover-stay-time="90">{{busy ? '上传中' : '就用这段'}}</view>
+      <view class="link" bindtap="reset" hover-class="pressed" hover-start-time="0" hover-stay-time="90">重录</view>
+    </block>
+  </block>
+
+  <!-- ══ 不用自己的声音 ═════════════════════════════════
+       第一层授权被拒之后走这条。**拒绝不能挡住下单** —— 那是弹窗里
+       白纸黑字写着的一句（「你仍然可以下单」），写了就得真的做到。 -->
+  <block wx:else>
+    <view class="h1">用歌手的声音</view>
+    <view class="sub">词、曲、编曲都不变，{{'\n'}}只是唱的人不是你</view>
+
+    <view class="btn" bindtap="submit" disabled="{{busy}}" hover-class="pressed" hover-start-time="0" hover-stay-time="90">{{busy ? '提交中' : '就这样，提交'}}</view>
+    <view class="link" bindtap="openL1" hover-class="pressed" hover-start-time="0" hover-stay-time="90">还是用我的声音</view>
+  </block>
+
+  <!-- 版权页注记的位置：沉到最底下，字最小，说完就退场。 -->
+  <!-- 两个入口都得一直开着：
+       「随时可以撤回」和「可随时查看本授权书」是条款里白纸黑字的两句，
+       界面上没有入口，那两句就是假的。 -->
+  <view class="notice">
+    <block wx:if="{{consented}}">这段录音只用于生成你的声线，随时可删除</block>
+    <block wx:else>录音之前，我们会就声音这件事单独征求你的同意</block>
+    <text class="notice-link" bindtap="openL1">授权说明</text>
+    <text class="notice-link" bindtap="openL2Read">授权书</text>
+  </view>
+</view>
+
+
+<!-- ══════════════════════════════════════════════════════
+     授权。两层共用这一张纸，条款由 doc 决定（utils/consent.js）：
+       第一层  按下录音键之前   敏感个人信息的「单独同意」
+       第二层  提交订单的那一下  声音权益的使用授权与责任划分
+
+     蒙层点了**不关闭**：关掉既不算同意也不算拒绝，而这一处必须是
+     一个明确的选择。误触退出在法律上什么都证明不了。
+     catchtouchmove 挡住背景跟着滚。
+
+     场合主题和明暗都挂在蒙层这一层：app.wxss 里的 .night.t-wedding 要求
+     两个类在同一个元素上，拆到两层就匹配不上，夜里那点金会退回白天的色。
+══════════════════════════════════════════════════════ -->
+<view class="sheet-mask {{mode}} t-{{theme}}" wx:if="{{sheet}}" catchtap="noop" catchtouchmove="noop">
+  <view class="sheet">
+
+    <view class="sheet-head">
+      <view class="eyebrow">{{doc.eyebrow}}</view>
+      <view class="sheet-title">{{docTitle}}</view>
+    </view>
+
+    <!-- bindscrolltolower 就是「滚动到底」那条存证：
+         它是证明用户有机会读完全文的直接证据，成本几乎为零。 -->
+    <scroll-view class="sheet-body" scroll-y bindscrolltolower="onReadEnd">
+      <!-- 横向内衬挂在**里面**这一层，不能挂在 scroll-view 上：
+           挂在 scroll-view 上时，微信算内容宽度会忽略那两个 padding、
+           却又按左内衬把内容整体右移 —— 右边正好被切掉一条，
+           而且切掉的那部分没有任何提示，用户读到的是残缺条款。 -->
+      <view class="sheet-inner">
+        <view class="sheet-lede">{{doc.lede}}</view>
+        <view class="sec" wx:for="{{doc.sections}}" wx:key="h">
+          <view class="sec-h">{{item.h}}</view>
+          <view class="sec-p">{{item.p}}</view>
+        </view>
+        <view class="sheet-end">— 以上 —</view>
+      </view>
+    </scroll-view>
+
+    <!-- 只是回来读一遍的时候，勾选框和签署键都不出现。
+         一份已经签过的文件再摆一次勾选框，是在诱导重复签署。 -->
+    <view class="sheet-foot" wx:if="{{readonly}}">
+      <view class="btn btn-ghost" bindtap="closeSheet" hover-class="pressed" hover-start-time="0" hover-stay-time="90">关闭</view>
+      <view class="link revoke" wx:if="{{canRevoke}}" bindtap="revoke" hover-class="pressed" hover-start-time="0" hover-stay-time="90">撤回授权并删除录音</view>
+    </view>
+
+    <view class="sheet-foot" wx:else>
+
+      <!-- 年龄。不是「我已满 18 岁」那种一刀切 —— 那会把「孩子唱给爸妈」
+           整条线砍掉。分三档，未成年那两档改由监护人代为授权，
+           未满 14 岁还会在正文里多出一份专门规则（个保法 31 条要求的）。
+           年龄用**选择**、授权用**勾选**，两件事分开摆，不打包。 -->
+      <view class="ages" wx:if="{{sheet === 'l1'}}">
+        <view class="ages-label">这段声音是谁的</view>
+        <view class="pills">
+          <view class="pill {{ageBand === item.k ? 'on' : ''}}" wx:for="{{ageBands}}" wx:for-item="item" wx:key="k"
+                data-k="{{item.k}}" bindtap="pickAge" hover-class="pressed" hover-start-time="0" hover-stay-time="90">{{item.t}}</view>
+        </view>
+      </view>
+
+      <!-- 没选年龄就不出勾选框：逼着人先回答年龄这一问，
+           而不是勾完了才发现问错了对象。 -->
+      <view class="ages-hint" wx:if="{{sheet === 'l1' && !ageBand}}">先选一档，下面的内容会跟着变</view>
+
+      <view class="check" wx:for="{{doc.checks}}" wx:key="*this"
+            data-i="{{index}}" bindtap="toggleCheck" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
+        <view class="box {{checks[index] ? 'on' : ''}}"><view class="tick"></view></view>
+        <view class="check-t">{{item}}</view>
+      </view>
+
+      <view class="btn {{allChecked ? '' : 'off'}}" bindtap="agree" hover-class="pressed" hover-start-time="0" hover-stay-time="90">{{doc.agree}}</view>
+      <view class="link" bindtap="decline" hover-class="pressed" hover-start-time="0" hover-stay-time="90">{{doc.decline}}</view>
+      <view class="link revoke" wx:if="{{canRevoke}}" bindtap="revoke" hover-class="pressed" hover-start-time="0" hover-stay-time="90">撤回授权并删除录音</view>
+    </view>
+
+  </view>
 </view>
