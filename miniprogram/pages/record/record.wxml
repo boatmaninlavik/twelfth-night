@@ -76,7 +76,12 @@
       <view class="mic {{recording ? 'on' : ''}}" bindtap="toggle" hover-class="pressed" hover-start-time="0" hover-stay-time="90">
         <view class="dot"></view>
       </view>
-      <view class="timer" wx:if="{{recording}}">{{elapsed}}″</view>
+      <!-- 光给一个秒数，人不知道"够了没有"，于是要么三秒就停、要么一直唱到
+           三十秒被自动掐断。所以把那条线说出来：不够时催一句，够了就告诉他可以停。 -->
+      <block wx:if="{{recording}}">
+        <view class="timer">{{elapsed}}″</view>
+        <view class="muted">{{elapsed < minSec ? '再唱一会儿' : '够了，随时可以停'}}</view>
+      </block>
       <view class="muted" wx:elif="{{!filePath}}">点一下开始</view>
     </view>
 
