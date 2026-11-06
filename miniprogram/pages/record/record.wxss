@@ -128,7 +128,7 @@
   letter-spacing: 1rpx;
   color: var(--muted);
 }
-/* 授权说明的常驻入口。撤回这条路必须一直找得到 ——
+/* 授权书的常驻入口。撤回这条路必须一直找得到 ——
    「随时可以撤回」写在条款里而界面上没有入口，那句话就是假的。 */
 .notice-link {
   margin-left: 12rpx;

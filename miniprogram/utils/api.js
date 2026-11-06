@@ -51,7 +51,7 @@ module.exports = {
   deleteVoice: (id) => request(`/api/orders/${id}/voice`, { method: 'DELETE' }),
 
   /* ── 声音档案 ────────────────────────────────────────
-     录音挂在人身上不是挂在单上：一份档案 12 个月有效，期间下的单都用它。
+     录音挂在人身上不是挂在单上：一份档案 3 个月有效，期间下的单都用它。
      openid 和设备令牌两个一起送，服务端有哪个用哪个 —— 跟 listOrders 同一个
      路数，因为这个 app 的 openid 拿不稳（见 utils/voice.js 的说明）。 */
   voiceQuery: (openid, token) => {
