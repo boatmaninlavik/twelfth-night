@@ -13,7 +13,6 @@
        让「我的」列表和作品页的题献认得出这是哪一首。
        既然如此，它就不该当这一页的标题，降成和另外两项并列的可选项。 -->
   <view class="h1">这首歌</view>
-  <view class="sub">三项都可以不填</view>
 
   <view class="lbl">给谁<text class="opt">（可选）</text></view>
 

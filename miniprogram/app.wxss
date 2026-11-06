@@ -160,8 +160,20 @@ page {
   height: 104rpx;
   line-height: 104rpx;
   text-align: center;
-  background: var(--ink);
-  color: var(--paper);
+  /* 原来是墨底白字。那是整页唯一一块实心深色，重量压过了标题 ——
+     在一册以留白和界栏为骨的书里，它更像贴上去的一枚按钮，不像排版的一部分。
+     现在退成和输入框同一张米白（--paper-sunk），字用干玫瑰（--sel）——
+     那是「不指定」选中时已经在用的颜色，不是新引进来的红。
+     app.wxss 开头那句「没有红：大红一进来整页就成了年货海报」，守住了。
+
+     不描边、不加圆角：圆角在这册书里只留给**要填的东西**（输入框、可选项、
+     搜索结果），按钮是动作不是填空，直角才对。
+     代价是它比以前轻 —— 米白与纸底只差一档。要加重，按顺序试这三样：
+       1. color 换成 var(--ink)（黑字，最稳）
+       2. 补一根界栏 box-shadow: inset 0 0 0 1rpx var(--rule)
+       3. 背景换回 var(--ink)（退回原样） */
+  background: var(--paper-sunk);
+  color: var(--sel);
   font-family: var(--serif);
   font-size: 30rpx;
   letter-spacing: 14rpx;
