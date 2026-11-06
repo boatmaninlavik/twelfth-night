@@ -25,7 +25,10 @@
   font-family: var(--serif);
   font-style: normal;
   font-size: 36rpx;
-  letter-spacing: 8rpx;
+  /* 字距只给 3rpx。音阶那一行是**谱面**，宽字距把唱名一个个摊开是对的；
+     这两句是**话**，同样摊开就散了，读起来一个字一个字往外蹦。
+     占同一个位置、同样的分量，但该像句子的还是得像句子。 */
+  letter-spacing: 3rpx;
 }
 .gloss {
   margin-top: 22rpx;
