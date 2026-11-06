@@ -21,6 +21,9 @@ Page({
   data: {
     occasions: ['婚礼', '告白', '给亲人', '倾诉', '生日', '道歉', '感恩'],
     occasion: '', theme: '', mode: '',
+    // toName 是**回填用**的值，不是实时值：打字时只更新 this._toName，
+    // 失焦和点「不指定」时才同步到这儿。noName 是「不指定」那颗的选中态。
+    toName: '', noName: true,
     results: [], searching: false, refSong: null,
   },
 
@@ -33,11 +36,31 @@ Page({
                      refSong: d.refSong || null });
     }
     this._toName = d.toName || '';
+    this.setData({ toName: this._toName, noName: !this._toName });
   },
 
   onShow() { mode.sync(this); },
 
-  onToName(e) { this._toName = e.detail.value; },   // 打字过程中不 setData
+  // 打字过程中不 setData。只有「不指定」那颗的亮灭要跟着变，
+  // 而它只在空↔非空跨界的那一下翻一次，不是每敲一个字都翻。
+  onToName(e) {
+    this._toName = e.detail.value;
+    const empty = !this._toName.trim();
+    if (empty !== this.data.noName) this.setData({ noName: empty });
+  },
+
+  // 失焦时把实时值同步回 data。这一步不只是为了显示 ——
+  // 不同步的话 value 会一直停在上一次的值，下次点「不指定」时
+  // setData 到同一个值等于没有变化，输入框**清不掉**。
+  syncName(e) {
+    this._toName = e.detail.value;
+    this.setData({ toName: this._toName, noName: !this._toName.trim() });
+  },
+
+  pickNoName() {
+    this._toName = '';
+    this.setData({ toName: '', noName: true });
+  },
 
   pick(e) {
     const v = e.currentTarget.dataset.v || '';

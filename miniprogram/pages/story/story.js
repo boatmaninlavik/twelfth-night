@@ -2,6 +2,7 @@ const app = getApp();
 const theme = require('../../utils/theme.js');
 const mode = require('../../utils/mode.js');
 const nav = require('../../utils/nav.js');
+const egsLib = require('../../utils/egs.js');
 
 /**
  * 定歌，第二步：故事。
@@ -16,13 +17,20 @@ Page({
     // 打字过程中的实时值在 this._story 里，不进 data（否则每敲一个字 setData 一次）
     writing: false, storyText: '',
     theme: '', mode: '',
+    // 「别人这么写」。跟着定歌页选的场合走 —— 示例贴着他自己的处境，
+    // 才有得可模仿；给婚礼的人看一条辞职的例子，等于没给。
+    egs: [],
   },
 
   onLoad() {
     nav.apply(this);
     const d = app.globalData.draft || {};
     this._story = d.story || '';
-    this.setData({ storyText: this._story, theme: theme.slug(d.occasion || '') });
+    this.setData({
+      storyText: this._story,
+      theme: theme.slug(d.occasion || ''),
+      egs: egsLib.forOccasion(d.occasion || ''),
+    });
   },
 
   onShow() { mode.sync(this); },

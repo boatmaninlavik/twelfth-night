@@ -23,5 +23,13 @@
             maxlength="800" auto-height="{{false}}" />
   <view wx:else class="panel tall {{storyText ? '' : 'is-ph'}}" bindtap="startWriting">{{storyText || '不用写得漂亮，真诚就好'}}</view>
 
+  <!-- 「别人这么写」。示范的是**颗粒度**，不是文采 —— 所以这几条故意写得有点笨。
+       写漂亮了反而更卡人：人一看就觉得「我写不到那么好」，然后一个字都不写。
+       只读，不可点 —— 做成「点一下填进去」的话，交上来的就是别人的故事。 -->
+  <view class="egs" wx:if="{{egs.length}}">
+    <view class="egs-label">别人这么写</view>
+    <view class="eg" wx:for="{{egs}}" wx:key="*this">— {{item}}</view>
+  </view>
+
   <view class="btn" bindtap="next" hover-class="pressed" hover-start-time="0" hover-stay-time="90">下 一 步</view>
 </view>

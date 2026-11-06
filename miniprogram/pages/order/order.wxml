@@ -7,12 +7,28 @@
   </view>
 
   <view class="eyebrow">定 歌</view>
-  <view class="h1">这首歌{{'\n'}}唱给谁？</view>
+  <!-- 标题原来是「这首歌／唱给谁？」—— 那是在**预设这首歌一定有个收信人**。
+       很多歌不是送给谁的，就是想唱出来；而且歌词里本来就不出现人名
+       （lyrics.js 里禁了，还有 stripToName() 兜底），名字的真正用途只是
+       让「我的」列表和作品页的题献认得出这是哪一首。
+       既然如此，它就不该当这一页的标题，降成和另外两项并列的可选项。 -->
+  <view class="h1">这首歌</view>
+  <view class="sub">三项都可以不填</view>
 
-  <!-- 不绑 value：绑上去等于每敲一个字整段文字跨一次线程再重渲一次。
-       文字由 input 自己保管，逻辑层只在 this._toName 留一份。 -->
+  <view class="lbl">给谁<text class="opt">（可选）</text></view>
+
+  <!-- 绑了 value 才能被「不指定」清空，但**只在失焦和点「不指定」时才 setData**，
+       打字过程中一次都不动 —— 否则每敲一个字整段文字要跨一次线程再重渲一次。
+       实时值始终在 this._toName 里。 -->
   <input class="panel" placeholder="ta 的名字" placeholder-class="ph"
-         bindinput="onToName" maxlength="20" />
+         value="{{toName}}" bindinput="onToName" bindblur="syncName" maxlength="20" />
+
+  <!-- 跟场合那一排同一个立场：「可选」不靠"你可以不选"来表达，
+       靠**默认就是不指定**来表达。不填名字是一个正向的选择，不是遗漏。 -->
+  <view class="pills">
+    <view class="pill {{noName ? 'on' : ''}}" bindtap="pickNoName"
+          hover-class="pressed" hover-start-time="0" hover-stay-time="90">不指定</view>
+  </view>
 
   <view class="lbl">什么场合<text class="opt">（可选）</text></view>
   <view class="pills">

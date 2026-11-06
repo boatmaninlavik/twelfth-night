@@ -19,3 +19,28 @@
    两者的换行行为必须一致，否则切换的一瞬间文字会跳。 */
 .panel.tall { margin-top: 44rpx; }
 .is-ph, .ph { color: #B8B1A0; }
+
+
+/* ── 「别人这么写」 ──────────────────────────────────
+   破折号起头，跟扉页那句「— 莎士比亚《第十二夜》」是同一个记号：
+   这是引别人的话，不是本页的说明文字。
+   字号比正文小、颜色比正文淡 —— 它是参考，不该跟输入框抢。 */
+.egs {
+  margin-top: 36rpx;
+  padding-top: 32rpx;
+  border-top: 1rpx solid var(--rule);
+}
+.egs-label {
+  font-family: var(--serif);
+  font-size: 22rpx;
+  letter-spacing: 8rpx;
+  text-indent: 8rpx;
+  color: var(--muted);
+}
+.eg {
+  margin-top: 20rpx;
+  font-family: var(--serif);
+  font-size: 26rpx;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
